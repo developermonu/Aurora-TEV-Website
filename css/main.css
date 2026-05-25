@@ -940,6 +940,11 @@ img { max-width: 100%; height: auto; display: block; }
     position: relative;
 }
 
+/* Mobile Swipe Helper - Hidden by default on desktop */
+.book-swipe-helper {
+    display: none;
+}
+
 /* Toolbar */
 .book-toolbar {
     display: flex;
@@ -3068,6 +3073,44 @@ img { max-width: 100%; height: auto; display: block; }
     .zoom-display {
         font-size: 0.68rem;
         min-width: 28px;
+    }
+
+    /* Mobile Swipe Helper Banner styling and keyframes */
+    .book-swipe-helper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-xs);
+        background: rgba(212, 175, 55, 0.05);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+        color: var(--accent-gold);
+        font-family: var(--font-sans);
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 8px 12px;
+        flex-shrink: 0;
+        z-index: 4;
+        animation: swipeHintPulse 2.5s infinite ease-in-out;
+        user-select: none;
+    }
+
+    .swipe-helper-icon {
+        color: var(--accent-gold);
+        flex-shrink: 0;
+        animation: iconSwipeMotion 2.5s infinite ease-in-out;
+    }
+
+    @keyframes swipeHintPulse {
+        0%, 100% { opacity: 0.85; background: rgba(212, 175, 55, 0.04); }
+        50% { opacity: 1; background: rgba(212, 175, 55, 0.08); }
+    }
+
+    @keyframes iconSwipeMotion {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
     }
 
     .book-viewport {

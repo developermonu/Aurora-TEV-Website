@@ -180,6 +180,16 @@ export class BookViewer {
                         </div>
                     </div>
 
+                    <!-- Swipe Helper Banner (Mobile Only) -->
+                    <div class="book-swipe-helper" id="book-swipe-helper">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="swipe-helper-icon">
+                            <polyline points="7 8 3 12 7 16"></polyline>
+                            <polyline points="17 8 21 12 17 16"></polyline>
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                        </svg>
+                        <span>Swipe left or right to turn pages</span>
+                    </div>
+
                     <!-- Flipbook viewport -->
                     <div class="book-viewport" id="book-viewport">
                         <!-- Loading state -->
