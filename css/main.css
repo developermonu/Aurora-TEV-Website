@@ -3075,25 +3075,38 @@ img { max-width: 100%; height: auto; display: block; }
         min-width: 28px;
     }
 
-    /* Mobile Swipe Helper Banner styling and keyframes */
+    /* Mobile Swipe Helper - Floating Capsule Above Chapters FAB */
     .book-swipe-helper {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: var(--space-xs);
-        background: rgba(212, 175, 55, 0.05);
-        border-top: 1px solid rgba(212, 175, 55, 0.12);
+        gap: 6px;
+        position: fixed;
+        bottom: 74px;
+        left: 16px;
+        z-index: 8900;
+        background: rgba(17, 17, 22, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        border-radius: 30px;
         color: var(--accent-gold);
         font-family: var(--font-sans);
-        font-size: 0.68rem;
+        font-size: 0.64rem;
         font-weight: 600;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        padding: 8px 12px;
+        padding: 8px 14px;
         flex-shrink: 0;
-        z-index: 4;
         animation: swipeHintPulse 2.5s infinite ease-in-out;
         user-select: none;
+        pointer-events: none; /* Let touches pass through to page behind */
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        transition: all 0.2s ease;
+    }
+
+    .book-swipe-helper.permanently-hidden {
+        display: none !important;
     }
 
     .swipe-helper-icon {

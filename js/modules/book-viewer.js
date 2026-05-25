@@ -19,6 +19,7 @@ export class BookViewer {
         this.zoomLevel     = this.isMobile() ? 1.0 : 1.5; // lower on mobile for performance
         this.audioEngine   = new AudioContextEngine();
         this.soundEnabled  = true;
+        this.pageTurnCount = 0;
 
         // StPageFlip instance
         this.flipBook = null;
@@ -271,6 +272,10 @@ export class BookViewer {
                 
                 // Hide floating trigger button when Table of Contents is open
                 floatingTOCBtn.style.display = 'none';
+
+                // Hide swipe helper banner when drawer is open
+                const swipeHelper = document.getElementById('book-swipe-helper');
+                if (swipeHelper) swipeHelper.style.display = 'none';
             });
         }
 
@@ -280,6 +285,12 @@ export class BookViewer {
             
             // Restore floating trigger button display state on close
             if (floatingTOCBtn) floatingTOCBtn.style.display = 'flex';
+
+            // Restore swipe helper if less than 3 page turns have occurred
+            const swipeHelper = document.getElementById('book-swipe-helper');
+            if (swipeHelper && this.pageTurnCount < 3) {
+                swipeHelper.style.display = 'flex';
+            }
         };
 
         if (closeTOCBtn) {
@@ -526,11 +537,11 @@ export class BookViewer {
             showCover:          true,
             usePortrait:        true,       // Auto single-page on mobile, double on desktop
             drawShadow:         !mobile,    // Disable shadow on mobile for performance
-            flippingTime:       mobile ? 500 : 700,
+            flippingTime:       mobile ? 350 : 700,
             maxShadowOpacity:   0.5,
-            mobileScrollSupport: false,
+            mobileScrollSupport: true,
             useMouseEvents:     true,
-            swipeDistance:      mobile ? 10 : 15,
+            swipeDistance:      mobile ? 10 : 30,
         });
 
         this.flipBook.loadFromHTML(this.stage.querySelectorAll('.flipbook-page'));
@@ -539,6 +550,17 @@ export class BookViewer {
         this.flipBook.on('flip', e => {
             // StPageFlip page index is 0-based; maps to our 1-based currentPage
             this.currentPage = e.data + 1;
+
+            // Increment page turn count
+            this.pageTurnCount++;
+            if (this.pageTurnCount >= 3) {
+                const swipeHelper = document.getElementById('book-swipe-helper');
+                if (swipeHelper) {
+                    swipeHelper.style.display = 'none';
+                    swipeHelper.classList.add('permanently-hidden');
+                }
+            }
+
             this.updateUI();
             this.updateActivePages();
             if (this.soundEnabled) {
