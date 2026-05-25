@@ -119,67 +119,125 @@ export class AudioContextEngine {
 
         const now = this.audioCtx.currentTime;
 
-        // --- Layer 1: Initial Paper Snap ---
-        const snapBuffer = this.createSnapBuffer();
-        const snapSource = this.audioCtx.createBufferSource();
-        snapSource.buffer = snapBuffer;
+        // --- Layer 1: Lift & Whoosh (Friction of page lifting through the air) ---
+        // Duration ~0.45s, sweeping bandpass filter for movement / Doppler effect
+        const whooshBuffer = this.createNoiseBuffer(0.45);
+        const whooshSource = this.audioCtx.createBufferSource();
+        whooshSource.buffer = whooshBuffer;
 
-        const snapFilter = this.audioCtx.createBiquadFilter();
-        snapFilter.type = 'highpass';
-        snapFilter.frequency.value = 2000;
+        const whooshFilter = this.audioCtx.createBiquadFilter();
+        whooshFilter.type = 'bandpass';
+        whooshFilter.Q.value = 1.2;
+        // Sweep frequency: 500Hz -> 1400Hz -> 800Hz
+        whooshFilter.frequency.setValueAtTime(500, now);
+        whooshFilter.frequency.exponentialRampToValueAtTime(1400, now + 0.18);
+        whooshFilter.frequency.exponentialRampToValueAtTime(800, now + 0.45);
 
-        const snapGain = this.audioCtx.createGain();
-        snapGain.gain.value = 0.4;
+        const whooshGain = this.audioCtx.createGain();
+        whooshGain.gain.setValueAtTime(0, now);
+        whooshGain.gain.linearRampToValueAtTime(0.35, now + 0.12);
+        whooshGain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
 
-        snapSource.connect(snapFilter);
-        snapFilter.connect(snapGain);
-        snapGain.connect(this.masterGain);
-        snapSource.start(now);
+        whooshSource.connect(whooshFilter);
+        whooshFilter.connect(whooshGain);
+        whooshGain.connect(this.masterGain);
+        whooshSource.start(now);
 
-        // --- Layer 2: Paper Rustle (main body) ---
-        const rustleBuffer = this.createNoiseBuffer(0.25);
+        // --- Layer 2: Paper Bending Crackles (Tension of paper fibers) ---
+        // Triggers 3 micro-snaps in sequence as the page curves
+        const snapTimes = [0.06, 0.16, 0.28];
+        const snapSources = [];
+        snapTimes.forEach((delay, idx) => {
+            const snapBuffer = this.createSnapBuffer();
+            const snapSource = this.audioCtx.createBufferSource();
+            snapSource.buffer = snapBuffer;
+
+            const snapFilter = this.audioCtx.createBiquadFilter();
+            snapFilter.type = 'highpass';
+            // Vary frequency slightly for natural variation
+            snapFilter.frequency.value = 2400 - (idx * 300);
+
+            const snapGain = this.audioCtx.createGain();
+            // Vary gain for depth
+            snapGain.gain.value = 0.28 - (idx * 0.05);
+
+            snapSource.connect(snapFilter);
+            snapFilter.connect(snapGain);
+            snapGain.connect(this.masterGain);
+            snapSource.start(now + delay);
+            snapSources.push(snapSource);
+        });
+
+        // --- Layer 3: Paper Rustle (Friction of page body) ---
+        const rustleBuffer = this.createNoiseBuffer(0.35);
         const rustleSource = this.audioCtx.createBufferSource();
         rustleSource.buffer = rustleBuffer;
 
         const rustleFilter = this.audioCtx.createBiquadFilter();
-        rustleFilter.type = 'bandpass';
-        rustleFilter.frequency.value = 3500;
-        rustleFilter.Q.value = 0.8;
+        rustleFilter.type = 'highpass';
+        rustleFilter.frequency.value = 3200;
 
         const rustleGain = this.audioCtx.createGain();
-        rustleGain.gain.setValueAtTime(0, now);
-        rustleGain.gain.linearRampToValueAtTime(0.5, now + 0.02);
-        rustleGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        rustleGain.gain.setValueAtTime(0, now + 0.04);
+        rustleGain.gain.linearRampToValueAtTime(0.18, now + 0.12);
+        rustleGain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
 
         rustleSource.connect(rustleFilter);
         rustleFilter.connect(rustleGain);
         rustleGain.connect(this.masterGain);
-        rustleSource.start(now + 0.01);
+        rustleSource.start(now + 0.04);
 
-        // --- Layer 3: Settling Thud ---
-        const thudBuffer = this.createNoiseBuffer(0.08);
+        // --- Layer 4: Page Landing "Slap" & Air Push ---
+        // Dull thud (low frequency) + air release (high frequency) at ~0.48s
+        const landingDelay = 0.44;
+
+        // A. Low-frequency thud
+        const thudBuffer = this.createNoiseBuffer(0.12);
         const thudSource = this.audioCtx.createBufferSource();
         thudSource.buffer = thudBuffer;
 
         const thudFilter = this.audioCtx.createBiquadFilter();
         thudFilter.type = 'lowpass';
-        thudFilter.frequency.value = 400;
+        thudFilter.frequency.value = 160;
 
         const thudGain = this.audioCtx.createGain();
-        thudGain.gain.setValueAtTime(0.3, now + 0.2);
-        thudGain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        thudGain.gain.setValueAtTime(0, now + landingDelay);
+        thudGain.gain.linearRampToValueAtTime(0.55, now + landingDelay + 0.01);
+        thudGain.gain.exponentialRampToValueAtTime(0.005, now + landingDelay + 0.12);
 
         thudSource.connect(thudFilter);
         thudFilter.connect(thudGain);
         thudGain.connect(this.masterGain);
-        thudSource.start(now + 0.2);
+        thudSource.start(now + landingDelay);
+
+        // B. High-frequency air whisper
+        const airBuffer = this.createNoiseBuffer(0.08);
+        const airSource = this.audioCtx.createBufferSource();
+        airSource.buffer = airBuffer;
+
+        const airFilter = this.audioCtx.createBiquadFilter();
+        airFilter.type = 'bandpass';
+        airFilter.frequency.value = 4500;
+        airFilter.Q.value = 0.6;
+
+        const airGain = this.audioCtx.createGain();
+        airGain.gain.setValueAtTime(0, now + landingDelay);
+        airGain.gain.linearRampToValueAtTime(0.15, now + landingDelay + 0.005);
+        airGain.gain.exponentialRampToValueAtTime(0.005, now + landingDelay + 0.08);
+
+        airSource.connect(airFilter);
+        airFilter.connect(airGain);
+        airGain.connect(this.masterGain);
+        airSource.start(now + landingDelay);
 
         // Cleanup
         setTimeout(() => {
-            snapSource.disconnect();
+            whooshSource.disconnect();
+            snapSources.forEach(s => s.disconnect());
             rustleSource.disconnect();
             thudSource.disconnect();
-        }, 500);
+            airSource.disconnect();
+        }, 1000);
     }
 
     /**

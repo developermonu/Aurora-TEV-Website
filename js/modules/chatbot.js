@@ -1,5 +1,5 @@
-// Aurora Scents — STATE 7: Claude AI Chatbot — Live API Integration
-// Calls Claude API directly from the browser with semantic confinement guardrails
+// Aurora Scents — STATE 7: Claude AI Chatbot — Production Client
+// Communicates with Express proxy at /api/chat. API key + PDF + system prompt all live server-side.
 
 export class ChatBot {
 
@@ -7,44 +7,13 @@ export class ChatBot {
         this.container = document.getElementById(mountId);
         if (!this.container) return;
 
-        this.messages = [];      // Chat history sent to the proxy
+        this.messages = [];
         this.isProcessing = false;
-        this.proxyEndpoint = '/api/chat'; // Server-side proxy — API key never leaves the server
+        this.proxyEndpoint = '/api/chat';
+        this.serverStatus = null;
+        this.selectedModel = 'gemini-2.5-flash-lite';
 
-        // Cognitive guardrails — system prompt sent with every API call
-        this.SYSTEM_PROMPT = `You are the elite, private corporate data intelligence agent for the Aurora Scents Executive Board. Your intelligence is anchored exclusively to the complete Phase 2 Techno-Economic Viability (TEV) Market Entry Report for India, compiled by eRoad Map Digital Solutions.
-
-CRITICAL OPERATIONAL RULES:
-
-1. SEMANTIC CONFINEMENT: You are strictly forbidden from utilizing outside market data, generic fragrance trends, speculative Indian economic variables, or industry assumptions not explicitly evaluated within the TEV document. Your world begins and ends with this report.
-
-2. ABSOLUTE DATA INTEGRITY: If a question concerns market dynamics, regulatory steps, competitor volumes, or pricing variables that are omitted from the report framework, output this exact statement:
-"I am explicitly trained to only reveal and evaluate insights from within the verified Aurora India TEV Framework to ensure data integrity."
-
-3. ZERO HALLUCINATION: Do not guess, speculate, extrapolate, or approximate. Financial questions must be answered using the quantitative sensitivity matrices and product pipeline definitions in the report.
-
-4. WHITE-SPACE ALIGNMENT: Always frame valid answers around the core thesis: India market entry is optimized via an "Accessible Premium" position using a native mobile-first D2C digital infrastructure, backed by a dual 100ml full-size + 10ml/20ml travel miniature portfolio deployment strategy.
-
-KEY REPORT DATA FOR REFERENCE:
-- HS Code: 3303.00 (Perfumes & Toilet Waters)
-- Composite import duty: 38.5% (20% BCD + 10% SWS + 18% IGST)
-- DG Classification: UN/NA 1266 — Class 3 Flammable Liquid (for fragrances >24% ABV)
-- Default EXW: $18 USD, Exchange Rate: ₹85/USD
-- Target MRP: ₹5,999 (full-size 100ml)
-- Landed Cost at default: ~₹2,241
-- Net Contribution Margin at default: ~₹158/unit (2.64% gross margin)
-- Monthly Break-Even: ~9,485 units
-- Critical EXW inflection point: $22 (margins compress below viable threshold at ₹5,999 MRP)
-- 90-Day phased launch: Foundation (0–30) → Build (31–60) → Launch (61–90)
-- 12 hero SKUs + miniature dual-format matrix
-- Competitors: Ajmal (offline-legacy), Armaf/Sterling (value-clone), Lattafa (marketplace-dependent)
-- Aurora's white-space: Accessible Premium × Native Digital D2C — unoccupied by all three competitors
-- CDSCO importer registration required before customs clearance
-- 3PL partner must hold Class 3 DG certification
-
-Respond in clear, structured markdown with bold headers and bullet points. Be precise, authoritative, and brief. If a question is outside the report scope, refuse firmly and clearly.`;
-
-        // Pre-baked strategy inquiry chips
+        // Chips — pre-built strategy inquiries
         this.chips = [
             'What is our compliance timeline for launching?',
             'Explain how upstream cost increases alter our strategy',
@@ -56,26 +25,30 @@ Respond in clear, structured markdown with bold headers and bullet points. Be pr
 
         this.render();
         this.bindEvents();
-        this.addWelcomeMessage();
+        this.checkServerStatus();
     }
 
     render() {
         this.container.innerHTML = `
             <div class="chat-layout">
+                <!-- Chat Header -->
+                <div class="chat-header">
+                    <div class="chat-header-title">TEV Strategy Assistant</div>
+                    <button class="chat-close-btn" id="chat-close" title="Exit Chat" aria-label="Exit Chat">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+
                 <!-- Messages Area -->
                 <div class="chat-messages" id="chat-messages"></div>
 
                 <!-- Input Area -->
                 <div class="chat-input-area">
-                    <!-- Strategy Chips -->
-                    <div class="strategy-chips" id="strategy-chips">
-                        ${this.chips.map(chip => `
-                            <button class="strategy-chip" data-chip="${chip}">${chip}</button>
-                        `).join('')}
-                    </div>
-
                     <!-- Input -->
                     <div class="chat-input-wrapper">
+                        <select id="model-selector" class="chat-model-selector-left">
+                            <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash-Lite</option>
+                        </select>
                         <textarea class="chat-input" id="chat-input" placeholder="Ask a strategic question about the TEV report..." rows="1"></textarea>
                         <button class="chat-send-btn" id="chat-send" title="Send message">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -84,17 +57,8 @@ Respond in clear, structured markdown with bold headers and bullet points. Be pr
 
                     <!-- Model indicator -->
                     <div class="chat-model-badge" id="chat-model-badge">
-                        <span class="model-dot"></span>
-                        <span id="model-badge-text">Claude 3.5 Sonnet — Connecting...</span>
-                    </div>
-
-                    <!-- System Prompt Toggle -->
-                    <div class="system-prompt-toggle" id="system-prompt-toggle">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                        View System Guardrails
-                    </div>
-                    <div class="system-prompt-panel" id="system-prompt-panel">
-                        <div class="system-prompt-content">${this.SYSTEM_PROMPT.replace(/\n/g, '<br>')}</div>
+                        <span class="model-dot" id="model-dot"></span>
+                        <span id="model-badge-text">Connecting to server...</span>
                     </div>
                 </div>
             </div>
@@ -102,31 +66,161 @@ Respond in clear, structured markdown with bold headers and bullet points. Be pr
 
         this.messagesContainer = document.getElementById('chat-messages');
         this.inputEl = document.getElementById('chat-input');
-
-        // Check server status and update badge
-        this.checkServerStatus();
     }
 
     async checkServerStatus() {
+        const badge = document.getElementById('model-badge-text');
+        const dot   = document.getElementById('model-dot');
+        const selector = document.getElementById('model-selector');
+
         try {
             const res  = await fetch('/api/status');
             const data = await res.json();
-            const badge = document.getElementById('model-badge-text');
-            if (badge) {
-                if (data.pdfLoaded) {
-                    badge.textContent = `Claude 3.5 Sonnet — TEV Report Cached (${(data.wordCount || 0).toLocaleString()} words)`;
-                } else {
-                    badge.textContent = 'Claude 3.5 Sonnet — Live (PDF not loaded)';
+            this.serverStatus = data;
+
+            // Populate selector options if available
+            if (selector) {
+                const previousValue = this.selectedModel || selector.value;
+                selector.innerHTML = '';
+                
+                // Add Claude option if active
+                if (data.model && data.model !== 'none') {
+                    const opt = document.createElement('option');
+                    opt.value = data.model;
+                    opt.textContent = this.formatModelName(data.model);
+                    selector.appendChild(opt);
+                }
+
+                // Add Gemini options if available
+                if (data.geminiAvailable && data.geminiModels) {
+                    data.geminiModels.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.textContent = m === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 2.5 Flash-Lite';
+                        selector.appendChild(opt);
+                    });
+                }
+
+                // Restore previous selection if it's still available, otherwise default to Gemini 2.5 Flash-Lite
+                if (previousValue && selector.querySelector(`option[value="${previousValue}"]`)) {
+                    this.selectedModel = previousValue;
+                    selector.value = this.selectedModel;
+                } else if (selector.querySelector('option[value="gemini-2.5-flash-lite"]')) {
+                    this.selectedModel = 'gemini-2.5-flash-lite';
+                    selector.value = this.selectedModel;
+                } else if (selector.options.length > 0) {
+                    this.selectedModel = selector.options[0].value;
+                    selector.value = this.selectedModel;
                 }
             }
+
+            if (data.status === 'ok' && data.model && data.model !== 'none') {
+                // All good — model discovered, API key works
+                const modelName = this.formatModelName(this.selectedModel || data.model);
+                if (data.pdfLoaded) {
+                    badge.textContent = `${modelName} — TEV Report Cached (${(data.wordCount || 0).toLocaleString()} words)`;
+                } else {
+                    badge.textContent = `${modelName} — Live (PDF not loaded)`;
+                }
+                dot.style.background = 'var(--accent-emerald)';
+                dot.style.boxShadow  = '0 0 6px var(--accent-emerald)';
+                
+                if (this.messages.length === 0 && this.messagesContainer.children.length === 0) {
+                    this.addWelcomeMessage(modelName, data.pdfLoaded, data.wordCount);
+                }
+
+            } else if (data.status === 'api_key_error') {
+                badge.textContent = 'API Key Error — Check server configuration';
+                dot.style.background = '#ef4444';
+                dot.style.boxShadow  = '0 0 6px #ef4444';
+                this.addMessage('assistant', `⚠️ **API Key Configuration Issue**
+
+The server could not authenticate with the Anthropic Claude API. This means the API key is either invalid, expired, or the account needs billing setup.
+
+**To fix this:**
+1. Go to **console.anthropic.com** → API Keys
+2. Verify the key is active and has credits
+3. Update the key in Hostinger Environment Variables (or the \`.env\` file)
+4. Restart the server
+
+The TEV Report (${(data.wordCount || 0).toLocaleString()} words) is loaded and ready — just the API key needs fixing.`);
+
+            } else if (data.status === 'discovering') {
+                badge.textContent = 'Discovering available models...';
+                dot.style.background = '#f59e0b';
+                dot.style.boxShadow  = '0 0 6px #f59e0b';
+                this.addMessage('assistant', 'The server is discovering available Claude models. Please wait a moment and refresh the page.');
+                // Retry in 5 seconds
+                setTimeout(() => this.checkServerStatus(), 5000);
+
+            } else {
+                badge.textContent = 'Server status unknown';
+                if (this.messages.length === 0 && this.messagesContainer.children.length === 0) {
+                    this.addWelcomeMessage('Claude', data.pdfLoaded, data.wordCount);
+                }
+            }
+
         } catch (e) {
-            const badge = document.getElementById('model-badge-text');
-            if (badge) badge.textContent = 'Claude 3.5 Sonnet — Live TEV Intelligence';
+            badge.textContent = 'Server offline — check that Node.js is running';
+            dot.style.background = '#ef4444';
+            dot.style.boxShadow  = '0 0 6px #ef4444';
+            this.addMessage('assistant', `⚠️ **Cannot reach the server**
+
+Make sure the Node.js server is running:
+\`\`\`
+node server.js
+\`\`\`
+
+Then refresh this page.`);
         }
+    }
+
+    formatModelName(modelId) {
+        if (modelId.includes('gemini-2.5-flash-lite')) return 'Gemini 2.5 Flash-Lite';
+        if (modelId.includes('gemini-2.5-flash'))      return 'Gemini 2.5 Flash';
+        if (modelId.includes('opus-4'))      return 'Claude 4 Opus';
+        if (modelId.includes('sonnet-4-5'))  return 'Claude Sonnet 4.5';
+        if (modelId.includes('sonnet-4'))    return 'Claude Sonnet 4';
+        if (modelId.includes('3-5-sonnet'))  return 'Claude 3.5 Sonnet';
+        if (modelId.includes('3-opus'))      return 'Claude 3 Opus';
+        if (modelId.includes('3-sonnet'))    return 'Claude 3 Sonnet';
+        if (modelId.includes('3-haiku'))     return 'Claude 3 Haiku';
+        if (modelId.includes('3-5-haiku'))   return 'Claude 3.5 Haiku';
+        return modelId;
+    }
+
+    addWelcomeMessage(modelName = 'Claude', pdfLoaded = false, wordCount = 0) {
+        const pdfNote = pdfLoaded
+            ? `I have been loaded with the complete **TEV Report** (~${(wordCount || 0).toLocaleString()} words) cached server-side for fast, cost-efficient responses.`
+            : `_Note: The TEV Report PDF could not be loaded on the server. Responses will be based on embedded key data points._`;
+
+        this.addMessage('assistant', `Welcome to the **Aurora Scents TEV Intelligence Engine** — powered by **${modelName}**.
+
+${pdfNote}
+
+You may ask me about:
+• **Regulatory & Compliance** — CDSCO registration, customs duties, DG logistics
+• **Financial Modeling** — Landed costs, margins, break-even cross-referenced across chapters
+• **Competitive Intelligence** — Ajmal, Armaf, Lattafa positioning analysis
+• **Product Strategy** — Portfolio architecture, miniature deployment matrix
+• **Launch Operations** — 90-day roadmap, milestones, dependencies
+
+Select a pre-built strategy inquiry below, or type your question below.`);
+
+        this.renderStrategyChips();
     }
 
     bindEvents() {
         document.getElementById('chat-send').addEventListener('click', () => this.sendMessage());
+
+        const closeBtn = document.getElementById('chat-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                if (window.auroraApp) {
+                    window.auroraApp.navigateTo(window.auroraApp.previousSection || 'book-viewer');
+                }
+            });
+        }
 
         this.inputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -140,82 +234,72 @@ Respond in clear, structured markdown with bold headers and bullet points. Be pr
             this.inputEl.style.height = Math.min(this.inputEl.scrollHeight, 120) + 'px';
         });
 
-        this.container.querySelectorAll('.strategy-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                this.inputEl.value = chip.dataset.chip;
-                this.sendMessage();
+        const selector = document.getElementById('model-selector');
+        if (selector) {
+            selector.addEventListener('change', (e) => {
+                this.selectedModel = e.target.value;
+                console.log('Selected model changed to:', this.selectedModel);
+                
+                // Update badge indicator text
+                const badge = document.getElementById('model-badge-text');
+                if (this.serverStatus) {
+                    const modelName = this.formatModelName(this.selectedModel);
+                    if (this.serverStatus.pdfLoaded) {
+                        badge.textContent = `${modelName} — TEV Report Cached (${(this.serverStatus.wordCount || 0).toLocaleString()} words)`;
+                    } else {
+                        badge.textContent = `${modelName} — Live (PDF not loaded)`;
+                    }
+                }
             });
-        });
-
-        document.getElementById('system-prompt-toggle').addEventListener('click', () => {
-            const panel = document.getElementById('system-prompt-panel');
-            panel.classList.toggle('expanded');
-            const icon = document.getElementById('system-prompt-toggle').querySelector('svg');
-            icon.style.transition = 'transform 0.3s ease';
-            icon.style.transform = panel.classList.contains('expanded') ? 'rotate(180deg)' : '';
-        });
-    }
-
-    addWelcomeMessage() {
-        this.addMessage('assistant', `Welcome to the **Aurora Scents TEV Intelligence Engine** — powered by **Claude 3.5 Sonnet**.
-
-I have been loaded with the complete **264-page TEV Report** and use Anthropic Prompt Caching — the document is cached server-side, making responses faster and more cost-efficient after the first query.
-
-You may ask me about:
-• **Regulatory & Compliance** — CDSCO registration, customs duties, DG logistics
-• **Financial Modeling** — Landed costs, margins, break-even cross-referenced across chapters
-• **Competitive Intelligence** — Ajmal, Armaf, Lattafa positioning analysis
-• **Product Strategy** — Portfolio architecture, miniature deployment matrix
-• **Launch Operations** — 90-day roadmap, milestones, dependencies
-
-Select a pre-built strategy inquiry above, or type your question below.`);
+        }
     }
 
     async sendMessage() {
         const text = this.inputEl.value.trim();
         if (!text || this.isProcessing) return;
 
+        this.removeStrategyChips();
+
         this.addMessage('user', text);
         this.inputEl.value = '';
         this.inputEl.style.height = 'auto';
 
-        // Add to conversation history
         this.messages.push({ role: 'user', content: text });
 
         this.isProcessing = true;
         this.showTyping();
 
         try {
-            const response = await this.callClaudeAPI();
+            const response = await this.callAPI();
             this.hideTyping();
             this.addMessage('assistant', response);
             this.messages.push({ role: 'assistant', content: response });
+            this.renderStrategyChips();
         } catch (err) {
             this.hideTyping();
-            console.error('Claude API error:', err);
+            console.error('API error:', err);
             this.addMessage('assistant', this.buildErrorMessage(err));
-            // Remove the last user message from history on error so it can be retried
             this.messages.pop();
+            this.renderStrategyChips();
         } finally {
             this.isProcessing = false;
         }
     }
 
-    async callClaudeAPI() {
-        // All requests go to our Express proxy — the API key stays on the server
+    async callAPI() {
         const response = await fetch(this.proxyEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 messages: this.messages,
-                system:   this.SYSTEM_PROMPT
+                model: this.selectedModel || (this.serverStatus ? this.serverStatus.model : null)
             })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data?.error || `HTTP ${response.status}`);
+            throw new Error(data?.error || `Server error (HTTP ${response.status})`);
         }
 
         return data.text || '_(No response received)_';
@@ -224,19 +308,34 @@ Select a pre-built strategy inquiry above, or type your question below.`);
     buildErrorMessage(err) {
         const msg = err.message || String(err);
 
-        if (msg.includes('401') || msg.includes('authentication')) {
-            return `⚠️ **Authentication Error**\n\nThe API key appears to be invalid or expired. Please contact your system administrator to update credentials.`;
+        if (msg.includes('ANTHROPIC_API_KEY')) {
+            return `⚠️ **Server Configuration Error**\n\nThe API key is not configured on the server. Add \`ANTHROPIC_API_KEY\` to your environment variables and restart the server.`;
         }
-        if (msg.includes('429') || msg.includes('rate')) {
-            return `⚠️ **Rate Limit Reached**\n\nToo many requests in a short period. Please wait a moment and try again.`;
+        if (msg.includes('401') || msg.includes('authentication') || msg.includes('auth')) {
+            return `⚠️ **Authentication Error**\n\nThe API key is invalid or expired. Update it in Hostinger Environment Variables or the \`.env\` file and restart the server.`;
+        }
+        if (msg.includes('No working Claude model')) {
+            return `⚠️ **No Working Model Found**\n\nThe API key cannot access any Claude models. Please check:\n• The key is active at **console.anthropic.com**\n• Your account has billing set up and credits available\n• The key has the correct permissions`;
+        }
+        if (msg.includes('429') || msg.includes('rate') || msg.includes('Too many')) {
+            return `⚠️ **Rate Limit Reached**\n\nToo many requests. Please wait 30 seconds and try again.`;
         }
         if (msg.includes('overloaded') || msg.includes('529')) {
-            return `⚠️ **API Temporarily Overloaded**\n\nThe Claude API is experiencing high demand. Please retry in a few seconds.`;
+            return `⚠️ **API Overloaded**\n\nClaude is experiencing high demand. Please retry in a few seconds.`;
         }
-        if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-            return `⚠️ **Network Error**\n\nUnable to reach the Claude API. This may be a CORS issue when running from a local file server — ensure the app is served over HTTP (not file://). If you see this consistently, a backend proxy may be needed.`;
+        if (msg.includes('initialising') || msg.includes('503')) {
+            return `⚠️ **Server Starting Up**\n\nThe server is still loading the TEV Report. Please wait a moment and try again.`;
         }
-        return `⚠️ **API Error**\n\n${msg}\n\nPlease try again or contact support.`;
+        if (msg.includes('502') || msg.includes('Unable to reach')) {
+            return `⚠️ **Network Error**\n\nThe server cannot reach the Anthropic API. Check the server's internet connection.`;
+        }
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed')) {
+            return `⚠️ **Connection Lost**\n\nCannot reach the server. Make sure the Node.js server is running (\`node server.js\`) and refresh the page.`;
+        }
+        if (msg.includes('retry')) {
+            return `⚠️ **Model Switching**\n\nThe server is switching to a different model. Please resend your message.`;
+        }
+        return `⚠️ **Error**\n\n${msg}\n\nPlease try again or contact your administrator.`;
     }
 
     addMessage(role, content) {
@@ -252,7 +351,46 @@ Select a pre-built strategy inquiry above, or type your question below.`);
     }
 
     formatContent(text) {
-        return text
+        let formatted = text;
+        
+        // Regex for markdown tables
+        const tableRegex = /((?:\|[^\n]+\|\r?\n?)+)/g;
+        formatted = formatted.replace(tableRegex, (match) => {
+            const lines = match.trim().split('\n');
+            if (lines.length < 2) return match;
+            
+            // Check if it's a separator line like |---|---|
+            const hasSeparator = lines[1].includes('|-') || lines[1].includes('-|');
+            if (!hasSeparator) return match;
+            
+            let tableHtml = '<table class="tev-chat-table" style="width:100%; border-collapse: collapse; margin: 12px 0; border: 1px solid rgba(212,175,55,0.2); background: rgba(0,0,0,0.2); font-size: 0.85rem;">';
+            
+            lines.forEach((line, index) => {
+                if (index === 1) return; // Skip separator line
+                
+                const cells = line.split('|').map(c => c.trim()).filter((c, i, arr) => i > 0 && i < arr.length - 1);
+                const isHeader = index === 0;
+                
+                tableHtml += '<tr style="' + (isHeader ? 'border-bottom: 2px solid var(--accent-gold); background: rgba(212,175,55,0.1);' : 'border-bottom: 1px solid var(--border-subtle);') + '">';
+                
+                cells.forEach(cell => {
+                    const tag = isHeader ? 'th' : 'td';
+                    const style = isHeader 
+                       ? 'padding: 8px 12px; text-align: left; font-weight: 600; color: var(--accent-gold);' 
+                       : 'padding: 8px 12px; text-align: left;';
+                    tableHtml += `<${tag} style="${style}">${cell}</${tag}>`;
+                });
+                
+                tableHtml += '</tr>';
+            });
+            
+            tableHtml += '</table>';
+            return tableHtml;
+        });
+
+        return formatted
+            .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;overflow-x:auto;font-size:0.82rem"><code>$1</code></pre>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.2);padding:1px 5px;border-radius:3px;font-size:0.85em">$1</code>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/^[•☐━◆] /gm, '<span style="color:var(--accent-gold)">◆</span> ')
@@ -286,5 +424,32 @@ Select a pre-built strategy inquiry above, or type your question below.`);
 
     scrollToBottom() {
         this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+
+    removeStrategyChips() {
+        const existingContainer = this.messagesContainer.querySelector('.chat-strategy-chips-container');
+        if (existingContainer) {
+            existingContainer.remove();
+        }
+    }
+
+    renderStrategyChips() {
+        this.removeStrategyChips();
+
+        const chipsContainer = document.createElement('div');
+        chipsContainer.className = 'chat-strategy-chips-container strategy-chips';
+        chipsContainer.innerHTML = this.chips.map(chip => `
+            <button class="strategy-chip" data-chip="${chip}">${chip}</button>
+        `).join('');
+
+        chipsContainer.querySelectorAll('.strategy-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                this.inputEl.value = chip.dataset.chip;
+                this.sendMessage();
+            });
+        });
+
+        this.messagesContainer.appendChild(chipsContainer);
+        this.scrollToBottom();
     }
 }

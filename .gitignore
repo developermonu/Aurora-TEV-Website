@@ -15,3 +15,6 @@ npm-debug.log*
 # Editor
 .vscode/
 .idea/
+
+# TEV Report PDF — NEVER commit this large confidential file
+TEV Report.pdf

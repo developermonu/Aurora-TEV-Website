@@ -5,8 +5,6 @@ import { PassportShield } from './modules/passport.js';
 import { BookViewer } from './modules/book-viewer.js';
 import { PodcastPlayer } from './modules/podcast-player.js';
 import { PortfolioGrid } from './modules/portfolio.js';
-import { CompetitorCanvas } from './modules/competitor-canvas.js';
-import { FinancialCalc } from './modules/financial-calc.js';
 import { ChatBot } from './modules/chatbot.js';
 
 class AuroraPortalApp {
@@ -85,6 +83,14 @@ class AuroraPortalApp {
         backdrop.classList.remove('active');
     }
 
+    showMobileMenuBtn() {
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        if (menuBtn) menuBtn.classList.add('shown');
+        
+        const navbar = document.getElementById('mobile-navbar');
+        if (navbar) navbar.classList.add('shown');
+    }
+
     handleAuthentication() {
         this.isAuthenticated = true;
         sessionStorage.setItem('aurora_authenticated', 'true');
@@ -101,6 +107,7 @@ class AuroraPortalApp {
                 shield.style.display = 'none';
                 this.sidebar.classList.add('visible');
                 this.viewport.classList.add('with-sidebar');
+                this.showMobileMenuBtn();
                 this.initModules();
                 this.initFloatingChatButton();
                 this.showSection(this.currentSection);
@@ -110,6 +117,7 @@ class AuroraPortalApp {
             shield.style.display = 'none';
             this.sidebar.classList.add('visible');
             this.viewport.classList.add('with-sidebar');
+            this.showMobileMenuBtn();
             this.initModules();
             this.initFloatingChatButton();
             this.showSection(this.currentSection);
@@ -117,24 +125,34 @@ class AuroraPortalApp {
     }
 
     initModules() {
-        // Lazy-initialize modules on first access
+        // Lazy-initialize modules on first access with robust error containment
         if (!this.modules.bookViewer) {
-            this.modules.bookViewer = new BookViewer('book-viewer-mount');
+            try {
+                this.modules.bookViewer = new BookViewer('book-viewer-mount');
+            } catch (e) {
+                console.error("Failed to initialize BookViewer module:", e);
+            }
         }
         if (!this.modules.podcastPlayer) {
-            this.modules.podcastPlayer = new PodcastPlayer('podcast-player-mount');
+            try {
+                this.modules.podcastPlayer = new PodcastPlayer('podcast-player-mount');
+            } catch (e) {
+                console.error("Failed to initialize PodcastPlayer module:", e);
+            }
         }
         if (!this.modules.portfolio) {
-            this.modules.portfolio = new PortfolioGrid('portfolio-mount');
-        }
-        if (!this.modules.competitorCanvas) {
-            this.modules.competitorCanvas = new CompetitorCanvas('competitor-canvas-mount');
-        }
-        if (!this.modules.financialCalc) {
-            this.modules.financialCalc = new FinancialCalc('financial-calc-mount');
+            try {
+                this.modules.portfolio = new PortfolioGrid('portfolio-mount');
+            } catch (e) {
+                console.error("Failed to initialize PortfolioGrid module:", e);
+            }
         }
         if (!this.modules.chatbot) {
-            this.modules.chatbot = new ChatBot('chatbot-mount');
+            try {
+                this.modules.chatbot = new ChatBot('chatbot-mount');
+            } catch (e) {
+                console.error("Failed to initialize ChatBot module:", e);
+            }
         }
     }
 
@@ -177,19 +195,17 @@ class AuroraPortalApp {
             this.viewport.scrollTop = 0;
         }
 
-        // Notify modules of visibility changes
-        if (sectionId === 'competitor-canvas' && this.modules.competitorCanvas) {
-            this.modules.competitorCanvas.onVisible();
-        }
+
 
         // Update floating chat button state
         const floatingBtn = document.getElementById('floating-chat-btn');
         const floatingIcon = document.getElementById('floating-chat-icon');
         if (floatingBtn) {
             if (sectionId === 'chatbot') {
-                floatingBtn.classList.add('chat-active');
-                floatingIcon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+                // Hide floating chat button completely when viewing chatbot section to prevent overlapping input elements
+                floatingBtn.style.display = 'none';
             } else {
+                floatingBtn.style.display = 'flex';
                 floatingBtn.classList.remove('chat-active');
                 floatingIcon.innerHTML = '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>';
             }

@@ -1,5 +1,6 @@
-// Aurora Scents — STATE 3: Chapter Audio Podcast Player
-// Split viewport with metrics blocks and custom HTML5 audio player
+// Aurora Scents — Podcast Player v3
+// Desktop: 3-column landscape (Playlist | Cover+Info | Controls)
+// Mobile:  Vertical stack with playlist as slide-up drawer
 
 export class PodcastPlayer {
 
@@ -9,299 +10,498 @@ export class PodcastPlayer {
 
         this.currentTrack = 0;
         this.isPlaying = false;
-        this.audioCtx = null;
-        this.analyser = null;
-        this.canvasAnimFrame = null;
+        this.playlistOpen = false;
+        this.playbackRate = 1.0;
+        this.waveAnimFrame = null;
+        this.audio = null;
 
-        // Chapter data representing TEV report chapters
         this.chapters = [
-            { num: 1, title: 'Executive Summary & Strategic Overview', duration: '12:34', durationSec: 754 },
-            { num: 2, title: 'India Fragrance Market Landscape', duration: '18:45', durationSec: 1125 },
-            { num: 3, title: 'Regulatory & Compliance Framework', duration: '14:22', durationSec: 862 },
-            { num: 4, title: 'CDSCO Registration & Import Protocol', duration: '11:08', durationSec: 668 },
-            { num: 5, title: 'Competitive Intelligence Analysis', duration: '16:51', durationSec: 1011 },
-            { num: 6, title: 'Aurora Brand Architecture & DNA', duration: '09:33', durationSec: 573 },
-            { num: 7, title: 'Product Portfolio & SKU Strategy', duration: '15:17', durationSec: 917 },
-            { num: 8, title: 'Miniature Trial Gateway Framework', duration: '08:42', durationSec: 522 },
-            { num: 9, title: 'D2C Digital Infrastructure Blueprint', duration: '13:29', durationSec: 809 },
-            { num: 10, title: 'Supply Chain & DG Logistics', duration: '17:06', durationSec: 1026 },
-            { num: 11, title: 'Consumer Psychology & Buyer Personas', duration: '11:55', durationSec: 715 },
-            { num: 12, title: 'Digital Marketing & CAC Strategy', duration: '14:48', durationSec: 888 },
-            { num: 13, title: 'Launch Timeline & Milestones', duration: '10:21', durationSec: 621 },
-            { num: 14, title: 'Financial Sensitivity Modeling', duration: '19:33', durationSec: 1173 },
-            { num: 15, title: 'Unit Economics & Margin Analysis', duration: '16:14', durationSec: 974 },
-            { num: 16, title: 'Risk Assessment & Mitigation', duration: '12:07', durationSec: 727 },
-            { num: 17, title: 'Operational Roadmap (90-Day)', duration: '13:45', durationSec: 825 },
-            { num: 18, title: 'KPI Framework & Success Metrics', duration: '09:18', durationSec: 558 },
-            { num: 19, title: 'Strategic Recommendations & Next Steps', duration: '11:42', durationSec: 702 }
+            { num: 1,  title: 'Executive Summary & Strategic Overview',    src: 'Podcasts/Podcast Audio Files/chapter_1.mp3',  cover: 'Podcasts/Cover Images/chapter 1.png', hasCover: true  },
+            { num: 2,  title: 'Study Background, Scope & Methodology',      src: 'Podcasts/Podcast Audio Files/Chapter_2.mp3',  cover: 'Podcasts/Cover Images/chapter 2.png', hasCover: true  },
+            { num: 3,  title: 'India Fragrance Market Overview',            src: 'Podcasts/Podcast Audio Files/Chapter_3.mp3',  cover: 'Podcasts/Cover Images/chapter 3.png', hasCover: true  },
+            { num: 4,  title: 'Market Opportunity Assessment',              src: 'Podcasts/Podcast Audio Files/chapter_4.mp3',  cover: 'Podcasts/Cover Images/chapter 4.png', hasCover: true  },
+            { num: 5,  title: 'Consumer Insights & Demand Analysis',        src: 'Podcasts/Podcast Audio Files/chapter_5.mp3',  cover: 'Podcasts/Cover Images/chapter 5.png', hasCover: true  },
+            { num: 6,  title: 'Competitive Landscape & Benchmarking',       src: 'Podcasts/Podcast Audio Files/chapter_6.mp3',  cover: 'Podcasts/Cover Images/chapter 6.png', hasCover: true  },
+            { num: 7,  title: 'Aurora Portfolio Assessment & Positioning',  src: 'Podcasts/Podcast Audio Files/chapter_7.mp3',  cover: 'Podcasts/Cover Images/Chapter 7.png', hasCover: true  },
+            { num: 8,  title: 'Product Strategy for India Market Entry',    src: 'Podcasts/Podcast Audio Files/chapter_8.mp3',  cover: 'Podcasts/Cover Images/Chapter 8.png', hasCover: true  },
+            { num: 9,  title: 'Pricing Strategy & Value Architecture',      src: 'Podcasts/Podcast Audio Files/chapter_9.mp3',  cover: 'Podcasts/Cover Images/Chapter 9.png', hasCover: true  },
+            { num: 10, title: 'Go-To-Market Strategy & Channel Roadmap',    src: 'Podcasts/Podcast Audio Files/chapter_10.mp3', cover: 'Podcasts/Cover Images/Chapter  10.png', hasCover: true },
+            { num: 11, title: 'Digital Strategy & E-commerce Approach',     src: 'Podcasts/Podcast Audio Files/chapter_11.mp3', cover: 'Podcasts/Cover Images/chapter 11.png', hasCover: true },
+            { num: 12, title: 'Supply Chain & Operations Feasibility',      src: 'Podcasts/Podcast Audio Files/Chapter_12.mp3', cover: 'Podcasts/Cover Images/chapter 12.png', hasCover: true },
+            { num: 13, title: 'Regulatory Environment & Compliance',        src: 'Podcasts/Podcast Audio Files/chapter_13.mp3', cover: 'Podcasts/Cover Images/chapter 13.png', hasCover: true },
+            { num: 14, title: 'Cost Structure & Financial Considerations',  src: 'Podcasts/Podcast Audio Files/chapter_14.mp3', cover: 'Podcasts/Cover Images/chapter 14.png', hasCover: true },
+            { num: 15, title: 'Financial Projections & Commercial Modeling',src: 'Podcasts/Podcast Audio Files/chapter_15.mp3', cover: 'Podcasts/Cover Images/chapter 15.png', hasCover: true },
+            { num: 16, title: 'Risk Assessment & Mitigation Strategy',      src: 'Podcasts/Podcast Audio Files/chapter_16.mp3', cover: 'Podcasts/Cover Images/chapter 16.png', hasCover: true },
+            { num: 17, title: 'Implementation Roadmap & Phased Rollout Plan',src: 'Podcasts/Podcast Audio Files/chapter_17.mp3', cover: 'Podcasts/Cover Images/chapter 17.png', hasCover: true },
+            { num: 18, title: 'Conclusion & Strategic Recommendations',     src: 'Podcasts/Podcast Audio Files/Chapter_18.mp3', cover: 'Podcasts/Cover Images/chapter 18.png', hasCover: true },
         ];
 
-        this.currentTime = 0;
-        this.playInterval = null;
+        this.speedOptions = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 
         this.render();
+        this.initAudio();
         this.bindEvents();
     }
 
-    render() {
-        const totalDuration = this.chapters.reduce((sum, ch) => sum + ch.durationSec, 0);
-        const totalMin = Math.floor(totalDuration / 60);
-        const totalHrs = Math.floor(totalMin / 60);
-        const remainMin = totalMin % 60;
+    /* ── Gradient fallback for chapters without a cover image ─── */
+    getCoverGradient(num) {
+        const g = [
+            'linear-gradient(135deg,#1a1a2e 0%,#0f3460 100%)',
+            'linear-gradient(135deg,#2d1b69 0%,#11998e 100%)',
+            'linear-gradient(135deg,#0d0d0d 0%,#a8810a 100%)',
+            'linear-gradient(135deg,#141e30 0%,#243b55 100%)',
+            'linear-gradient(135deg,#360033 0%,#0b8793 100%)',
+            'linear-gradient(135deg,#1c1c1c 0%,#8b6914 100%)',
+            'linear-gradient(135deg,#0f2027 0%,#2c5364 100%)',
+            'linear-gradient(135deg,#16222a 0%,#3a6186 100%)',
+            'linear-gradient(135deg,#232526 0%,#414345 100%)',
+            'linear-gradient(135deg,#1f1c2c 0%,#928dab 100%)',
+            'linear-gradient(135deg,#093028 0%,#237a57 100%)',
+            'linear-gradient(135deg,#2c1654 0%,#7a1fa2 100%)',
+            'linear-gradient(135deg,#2d3436 0%,#d4af37 100%)',
+            'linear-gradient(135deg,#0a0a0a 0%,#3d2b1f 100%)',
+        ];
+        return g[(num - 1) % g.length];
+    }
 
+    /* ── Build cover HTML ─── */
+    buildCoverHtml(ch) {
+        return ch.hasCover
+            ? `<img src="${ch.cover}" alt="Chapter ${ch.num} Cover" class="pod-cover-img">`
+            : `<div class="pod-cover-placeholder" style="background:${this.getCoverGradient(ch.num)};"><span class="pod-cover-num">${String(ch.num).padStart(2,'0')}</span></div>`;
+    }
+
+    /* ── Build one playlist item ─── */
+    buildPlaylistItem(c, i) {
+        const thumb = c.hasCover
+            ? `<img src="${c.cover}" alt="Chapter ${c.num}">`
+            : `<div class="pod-pitem-thumb-gradient" style="background:${this.getCoverGradient(c.num)};"><span>${String(c.num).padStart(2,'0')}</span></div>`;
+        return `
+            <div class="pod-playlist-item ${i === this.currentTrack ? 'active' : ''}" data-track="${i}" id="pod-pitem-${i}">
+                <div class="pod-pitem-thumb">
+                    ${thumb}
+                    <div class="pod-pitem-playing-indicator" id="pod-pitem-indicator-${i}">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="pod-pitem-info">
+                    <div class="pod-pitem-num">Chapter ${c.num}</div>
+                    <div class="pod-pitem-title">${c.title}</div>
+                </div>
+            </div>`;
+    }
+
+    /* ── Full render ─── */
+    render() {
         const ch = this.chapters[this.currentTrack];
 
         this.container.innerHTML = `
-            <div class="podcast-layout">
-                <!-- Left: Metrics -->
-                <div class="podcast-metrics">
-                    <div class="metric-card">
-                        <div class="metric-label">Total Chapters</div>
-                        <div class="metric-value">${this.chapters.length}</div>
-                        <div class="metric-detail">Comprehensive TEV Report Coverage</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Total Runtime</div>
-                        <div class="metric-value">${totalHrs}h ${remainMin}m</div>
-                        <div class="metric-detail">${totalDuration.toLocaleString()} seconds of executive briefing</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Current Chapter</div>
-                        <div class="metric-value" id="current-chapter-display" style="font-size: 1.5rem;">${ch.title}</div>
-                        <div class="metric-detail">Chapter ${ch.num} of ${this.chapters.length}</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Chapters Covered</div>
-                        <div class="metric-value" style="color: var(--accent-emerald);">—</div>
-                        <div class="metric-detail">Track your progress through the report</div>
-                    </div>
+        <div class="pod-player-shell" id="pod-player-shell">
 
-                    <!-- Track List -->
-                    <div style="background: var(--gradient-card); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-lg); padding: 16px;">
-                        <div style="font-size: 0.68rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;">Chapter Index</div>
-                        <div class="track-list" id="track-list">
-                            ${this.chapters.map((ch, i) => `
-                                <div class="track-item ${i === this.currentTrack ? 'active' : ''}" data-track="${i}">
-                                    <span class="track-num">${String(ch.num).padStart(2, '0')}</span>
-                                    <span style="flex:1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ch.title}</span>
-                                    <span class="track-duration">${ch.duration}</span>
-                                </div>
-                            `).join('')}
+            <!-- ████ COL 1 — PLAYLIST (always visible desktop / drawer mobile) ████ -->
+            <div class="pod-col-playlist" id="pod-col-playlist">
+                <div class="pod-playlist-header">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent-gold);flex-shrink:0"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                    <span class="pod-playlist-title">All Chapters</span>
+                    <button class="pod-playlist-close" id="pod-playlist-close" title="Close playlist">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="pod-playlist-list" id="pod-playlist-list">
+                    ${this.chapters.map((c, i) => this.buildPlaylistItem(c, i)).join('')}
+                </div>
+            </div>
+
+            <!-- ████ COL 2 — MAIN PLAYER (COVER + CONTROLS STACKED) ████ -->
+            <div class="pod-col-main-player">
+                <!-- Cover art & track info -->
+                <div class="pod-col-cover">
+                    <div class="pod-cover-area">
+                        <div class="pod-cover-frame" id="pod-cover-frame">
+                            ${this.buildCoverHtml(ch)}
                         </div>
+                        <div class="pod-cover-ring" id="pod-cover-ring"></div>
+                    </div>
+                    <div class="pod-info-area">
+                        <div class="pod-chapter-badge" id="pod-chapter-badge">CHAPTER ${ch.num} OF ${this.chapters.length}</div>
+                        <div class="pod-track-title" id="pod-track-title">${ch.title}</div>
+                        <div class="pod-track-series">Aurora Scents TEV Intelligence Briefing</div>
                     </div>
                 </div>
 
-                <!-- Right: Audio Player -->
-                <div class="audio-player-container">
-                    <div class="player-track-info">
-                        <div class="track-chapter" id="player-chapter-label">Chapter ${ch.num}</div>
-                        <div class="track-title" id="player-track-title">${ch.title}</div>
+                <!-- Controls -->
+                <div class="pod-col-controls">
+                    <!-- Waveform -->
+                    <div class="pod-waveform-area">
+                        <canvas class="pod-waveform" id="pod-waveform" height="56"></canvas>
                     </div>
 
-                    <!-- Waveform visualization -->
-                    <canvas class="player-waveform" id="player-waveform" width="600" height="64"></canvas>
-
-                    <!-- Seek bar -->
-                    <div class="player-seek-container">
-                        <input type="range" class="player-seek" id="player-seek" min="0" max="${ch.durationSec}" value="0" step="1">
-                        <div class="player-times">
-                            <span id="player-time-current">0:00</span>
-                            <span id="player-time-total">${ch.duration}</span>
+                    <!-- Seek Bar -->
+                    <div class="pod-seek-area">
+                        <input type="range" class="pod-seek" id="pod-seek" min="0" max="100" value="0" step="0.1">
+                        <div class="pod-times">
+                            <span id="pod-time-current">0:00</span>
+                            <span id="pod-time-total">—:——</span>
                         </div>
                     </div>
 
-                    <!-- Controls -->
-                    <div class="player-controls">
-                        <button class="player-btn" id="player-prev" title="Previous chapter">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+                    <!-- Transport -->
+                    <div class="pod-transport">
+                        <button class="pod-btn pod-btn-sm" id="pod-prev" title="Previous Chapter">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                         </button>
-                        <button class="player-btn" id="player-skip-back" title="Rewind 15s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" font-size="8" fill="currentColor" text-anchor="middle" style="font-family:var(--font-sans)">15</text></svg>
+                        <button class="pod-btn pod-btn-sm" id="pod-skip-back" title="Rewind 15s">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            <span class="pod-btn-badge">15</span>
                         </button>
-                        <button class="player-btn player-btn-play" id="player-play" title="Play / Pause">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" id="play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <button class="pod-btn pod-btn-play" id="pod-play" title="Play / Pause">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" id="pod-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </button>
-                        <button class="player-btn" id="player-skip-fwd" title="Forward 15s">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/><text x="12" y="16" font-size="8" fill="currentColor" text-anchor="middle" style="font-family:var(--font-sans)">15</text></svg>
+                        <button class="pod-btn pod-btn-sm" id="pod-skip-fwd" title="Forward 15s">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            <span class="pod-btn-badge">15</span>
                         </button>
-                        <button class="player-btn" id="player-next" title="Next chapter">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                        <button class="pod-btn pod-btn-sm" id="pod-next" title="Next Chapter">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                         </button>
                     </div>
 
-                    <!-- Volume & Speed -->
-                    <div class="player-extras">
-                        <div class="volume-control">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                            <input type="range" class="volume-slider" id="player-volume" min="0" max="100" value="80" title="Volume">
+                    <!-- Speed Pills -->
+                    <div class="pod-speed-group">
+                        <span class="pod-speed-label">Speed</span>
+                        <div class="pod-speed-pills" id="pod-speed-pills">
+                            ${this.speedOptions.map(s =>
+                                `<button class="pod-speed-pill ${s === 1 ? 'active' : ''}" data-speed="${s}">${s}×</button>`
+                            ).join('')}
                         </div>
-
-                        <select class="speed-selector" id="player-speed" title="Playback speed">
-                            <option value="0.75">0.75×</option>
-                            <option value="1" selected>1.0×</option>
-                            <option value="1.25">1.25×</option>
-                            <option value="1.5">1.5×</option>
-                            <option value="2">2.0×</option>
-                        </select>
                     </div>
 
-                    <div style="margin-top: 16px; padding: 12px; background: var(--bg-secondary); border-radius: var(--border-radius-md); text-align: center;">
-                        <p style="font-size: 0.75rem; color: var(--text-muted);">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            Audio briefings simulate chapter narration. Connect actual audio files for production deployment.
-                        </p>
+                    <!-- Volume + mobile playlist toggle -->
+                    <div class="pod-side-controls">
+                        <div class="pod-volume-group">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <input type="range" class="pod-volume" id="pod-volume" min="0" max="100" value="80">
+                        </div>
+                        <!-- Playlist toggle — visible on mobile only (hidden via CSS on desktop) -->
+                        <button class="pod-btn pod-btn-sm pod-playlist-toggle" id="pod-playlist-toggle" title="Show Playlist">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        </button>
                     </div>
                 </div>
             </div>
-        `;
 
-        // Draw initial waveform
-        this.drawWaveform();
+            <!-- Dark backdrop for mobile playlist drawer -->
+            <div class="pod-backdrop" id="pod-backdrop"></div>
+
+            <!-- Floating Chapters Selector Button on Mobile -->
+            <button class="pod-floating-btn" id="pod-floating-btn" title="Open Chapter Playlist" aria-label="Open Chapter Playlist">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span>Chapters</span>
+            </button>
+        </div>`;
+
+        // Cache frequently-accessed DOM refs
+        this.playBtn      = document.getElementById('pod-play');
+        this.playIcon     = document.getElementById('pod-play-icon');
+        this.seekEl       = document.getElementById('pod-seek');
+        this.timeCurrent  = document.getElementById('pod-time-current');
+        this.timeTotal    = document.getElementById('pod-time-total');
+        this.trackTitle   = document.getElementById('pod-track-title');
+        this.chapterBadge = document.getElementById('pod-chapter-badge');
+        this.coverFrame   = document.getElementById('pod-cover-frame');
+        this.coverRing    = document.getElementById('pod-cover-ring');
+        this.waveCanvas   = document.getElementById('pod-waveform');
+        this.playlistCol  = document.getElementById('pod-col-playlist');
+        this.backdrop     = document.getElementById('pod-backdrop');
+
+        this.resizeWaveCanvas();
+        this.drawStaticWaveform();
     }
 
-    bindEvents() {
-        // Play/Pause toggle
-        document.getElementById('player-play').addEventListener('click', () => this.togglePlay());
-
-        // Skip controls
-        document.getElementById('player-skip-back').addEventListener('click', () => this.skipTime(-15));
-        document.getElementById('player-skip-fwd').addEventListener('click', () => this.skipTime(15));
-
-        // Next/Prev
-        document.getElementById('player-prev').addEventListener('click', () => this.changeTrack(-1));
-        document.getElementById('player-next').addEventListener('click', () => this.changeTrack(1));
-
-        // Seek bar
-        document.getElementById('player-seek').addEventListener('input', (e) => {
-            this.currentTime = parseInt(e.target.value);
-            this.updateTimeDisplay();
-        });
-
-        // Speed selector
-        document.getElementById('player-speed').addEventListener('change', (e) => {
-            this.playbackSpeed = parseFloat(e.target.value);
-        });
-
-        // Track list clicks
-        const trackItems = this.container.querySelectorAll('.track-item');
-        trackItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const trackIdx = parseInt(item.dataset.track);
-                this.currentTrack = trackIdx;
-                this.currentTime = 0;
-                this.updateTrackDisplay();
-            });
-        });
+    resizeWaveCanvas() {
+        if (!this.waveCanvas) return;
+        const w = this.waveCanvas.parentElement?.clientWidth || 600;
+        this.waveCanvas.width = w;
     }
 
-    togglePlay() {
-        this.isPlaying = !this.isPlaying;
-        const icon = document.getElementById('play-icon');
+    /* ── Audio init ─── */
+    initAudio() {
+        this.audio = new Audio();
+        this.audio.preload = 'metadata';
+        this.audio.volume  = 0.8;
+        this.loadTrack(this.currentTrack, false);
+    }
 
-        if (this.isPlaying) {
-            icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    loadTrack(index, autoPlay = false) {
+        const ch = this.chapters[index];
+        this.currentTrack = index;
+        this.audio.src = ch.src;
+        this.audio.playbackRate = this.playbackRate;
 
-            // Simulate playback progression
-            this.playInterval = setInterval(() => {
-                const speed = parseFloat(document.getElementById('player-speed').value) || 1;
-                this.currentTime += speed;
-                const maxTime = this.chapters[this.currentTrack].durationSec;
+        // Update cover art
+        this.coverFrame.innerHTML = this.buildCoverHtml(ch);
 
-                if (this.currentTime >= maxTime) {
-                    // Auto-advance to next chapter
-                    if (this.currentTrack < this.chapters.length - 1) {
-                        this.currentTrack++;
-                        this.currentTime = 0;
-                        this.updateTrackDisplay();
-                    } else {
-                        this.currentTime = maxTime;
-                        this.togglePlay();
-                    }
-                }
+        // Update text info
+        this.trackTitle.textContent   = ch.title;
+        this.chapterBadge.textContent = `CHAPTER ${ch.num} OF ${this.chapters.length}`;
+        this.seekEl.value             = 0;
+        this.timeCurrent.textContent  = '0:00';
+        this.timeTotal.textContent    = '—:——';
 
-                document.getElementById('player-seek').value = this.currentTime;
-                this.updateTimeDisplay();
-                this.drawWaveform();
-            }, 1000);
+        // Update playlist highlight
+        document.querySelectorAll('.pod-playlist-item').forEach((el, i) => {
+            el.classList.toggle('active', i === index);
+        });
+        document.querySelectorAll('.pod-pitem-playing-indicator').forEach(el => el.classList.remove('active'));
+
+        // On mobile, close the drawer after selecting. On desktop, scroll active item into view.
+        if (this.isMobile()) {
+            this.togglePlaylist(false);
         } else {
-            icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
-            clearInterval(this.playInterval);
+            const activeEl = document.getElementById(`pod-pitem-${index}`);
+            if (activeEl) {
+                activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
+        if (autoPlay) {
+            this.audio.play().catch(() => {});
+            this.isPlaying = true;
+            this.updatePlayState();
+        } else {
+            this.isPlaying = false;
+            this.updatePlayState();
         }
     }
 
-    skipTime(delta) {
-        const maxTime = this.chapters[this.currentTrack].durationSec;
-        this.currentTime = Math.max(0, Math.min(maxTime, this.currentTime + delta));
-        document.getElementById('player-seek').value = this.currentTime;
-        this.updateTimeDisplay();
+    /* ── Is the viewport currently mobile? ─── */
+    isMobile() {
+        return window.innerWidth < 769;
     }
 
-    changeTrack(delta) {
-        const newTrack = this.currentTrack + delta;
-        if (newTrack < 0 || newTrack >= this.chapters.length) return;
+    /* ── Event bindings ─── */
+    bindEvents() {
+        // Play / Pause
+        this.playBtn.addEventListener('click', () => this.togglePlay());
 
-        this.currentTrack = newTrack;
-        this.currentTime = 0;
-        this.updateTrackDisplay();
-    }
+        // Prev / Next
+        document.getElementById('pod-prev').addEventListener('click', () => this.prevTrack());
+        document.getElementById('pod-next').addEventListener('click', () => this.nextTrack());
 
-    updateTrackDisplay() {
-        const ch = this.chapters[this.currentTrack];
-
-        document.getElementById('player-chapter-label').textContent = `Chapter ${ch.num}`;
-        document.getElementById('player-track-title').textContent = ch.title;
-        document.getElementById('player-seek').max = ch.durationSec;
-        document.getElementById('player-seek').value = this.currentTime;
-        document.getElementById('player-time-total').textContent = ch.duration;
-        document.getElementById('current-chapter-display').textContent = ch.title;
-
-        this.updateTimeDisplay();
-
-        // Update track list active state
-        const trackItems = this.container.querySelectorAll('.track-item');
-        trackItems.forEach((item, i) => {
-            item.classList.toggle('active', i === this.currentTrack);
+        // Skip ±15 s
+        document.getElementById('pod-skip-back').addEventListener('click', () => {
+            if (this.audio) this.audio.currentTime = Math.max(0, this.audio.currentTime - 15);
+        });
+        document.getElementById('pod-skip-fwd').addEventListener('click', () => {
+            if (this.audio) this.audio.currentTime = Math.min(this.audio.duration || 0, this.audio.currentTime + 15);
         });
 
-        this.drawWaveform();
+        // Seek
+        this.seekEl.addEventListener('input', () => {
+            if (this.audio && this.audio.duration) {
+                this.audio.currentTime = (parseFloat(this.seekEl.value) / 100) * this.audio.duration;
+            }
+        });
+
+        // Volume
+        document.getElementById('pod-volume').addEventListener('input', e => {
+            if (this.audio) this.audio.volume = parseInt(e.target.value) / 100;
+        });
+
+        // Speed pills
+        document.getElementById('pod-speed-pills').addEventListener('click', e => {
+            const pill = e.target.closest('.pod-speed-pill');
+            if (!pill) return;
+            const speed = parseFloat(pill.dataset.speed);
+            this.playbackRate = speed;
+            if (this.audio) this.audio.playbackRate = speed;
+            document.querySelectorAll('.pod-speed-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+        });
+
+        // Playlist toggle (mobile drawer open/close)
+        document.getElementById('pod-playlist-toggle').addEventListener('click', () => this.togglePlaylist());
+        document.getElementById('pod-playlist-close').addEventListener('click', () => this.togglePlaylist(false));
+        this.backdrop.addEventListener('click', () => this.togglePlaylist(false));
+
+        const floatingPodBtn = document.getElementById('pod-floating-btn');
+        if (floatingPodBtn) {
+            floatingPodBtn.addEventListener('click', () => this.togglePlaylist(true));
+        }
+
+        // Playlist item clicks
+        document.getElementById('pod-playlist-list').addEventListener('click', e => {
+            const item = e.target.closest('.pod-playlist-item');
+            if (!item) return;
+            this.loadTrack(parseInt(item.dataset.track), true);
+        });
+
+        // Audio events
+        this.audio.addEventListener('timeupdate',    () => this.onTimeUpdate());
+        this.audio.addEventListener('loadedmetadata', () => {
+            this.timeTotal.textContent = this.formatTime(this.audio.duration);
+        });
+        this.audio.addEventListener('ended', () => {
+            if (this.currentTrack < this.chapters.length - 1) {
+                this.loadTrack(this.currentTrack + 1, true);
+            } else {
+                this.isPlaying = false;
+                this.updatePlayState();
+            }
+        });
+        this.audio.addEventListener('play',  () => { this.isPlaying = true;  this.updatePlayState(); this.startWaveAnimation(); });
+        this.audio.addEventListener('pause', () => { this.isPlaying = false; this.updatePlayState(); this.stopWaveAnimation(); });
+
+        // Keyboard shortcuts (only when podcast section is active)
+        document.addEventListener('keydown', e => {
+            const section = document.getElementById('section-podcast-player');
+            if (!section?.classList.contains('active')) return;
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === ' ')           { e.preventDefault(); this.togglePlay(); }
+            if (e.key === 'ArrowRight')  { e.preventDefault(); document.getElementById('pod-skip-fwd').click(); }
+            if (e.key === 'ArrowLeft')   { e.preventDefault(); document.getElementById('pod-skip-back').click(); }
+        });
+
+        // Resize observer — redraw waveform when column resizes
+        if (window.ResizeObserver && this.waveCanvas?.parentElement) {
+            const ro = new ResizeObserver(() => { this.resizeWaveCanvas(); this.drawStaticWaveform(); });
+            ro.observe(this.waveCanvas.parentElement);
+        }
     }
 
-    updateTimeDisplay() {
-        const mins = Math.floor(this.currentTime / 60);
-        const secs = Math.floor(this.currentTime % 60);
-        document.getElementById('player-time-current').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+    /* ── Playback controls ─── */
+    togglePlay() {
+        if (!this.audio) return;
+        this.isPlaying ? this.audio.pause() : this.audio.play().catch(err => console.warn('Audio play blocked:', err));
     }
 
-    drawWaveform() {
-        const canvas = document.getElementById('player-waveform');
+    prevTrack() {
+        if (this.audio && this.audio.currentTime > 3) { this.audio.currentTime = 0; return; }
+        if (this.currentTrack > 0) this.loadTrack(this.currentTrack - 1, this.isPlaying);
+    }
+
+    nextTrack() {
+        if (this.currentTrack < this.chapters.length - 1) this.loadTrack(this.currentTrack + 1, this.isPlaying);
+    }
+
+    /* ── UI state updates ─── */
+    updatePlayState() {
+        if (this.isPlaying) {
+            this.playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+            this.playBtn.classList.add('playing');
+            this.coverRing.classList.add('active');
+            const ind = document.getElementById(`pod-pitem-indicator-${this.currentTrack}`);
+            if (ind) ind.classList.add('active');
+        } else {
+            this.playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+            this.playBtn.classList.remove('playing');
+            this.coverRing.classList.remove('active');
+            document.querySelectorAll('.pod-pitem-playing-indicator').forEach(el => el.classList.remove('active'));
+        }
+    }
+
+    onTimeUpdate() {
+        if (!this.audio?.duration) return;
+        this.seekEl.value = (this.audio.currentTime / this.audio.duration) * 100;
+        this.timeCurrent.textContent = this.formatTime(this.audio.currentTime);
+    }
+
+    formatTime(secs) {
+        if (!secs || isNaN(secs)) return '0:00';
+        const m = Math.floor(secs / 60);
+        const s = Math.floor(secs % 60);
+        return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    /* ── Playlist drawer (mobile only) ─── */
+    togglePlaylist(forceState) {
+        // On desktop the playlist column is always visible — only act on mobile
+        if (!this.isMobile() && forceState !== false) return;
+
+        this.playlistOpen = forceState !== undefined ? forceState : !this.playlistOpen;
+        this.playlistCol.classList.toggle('drawer-open', this.playlistOpen);
+        this.backdrop.classList.toggle('active', this.playlistOpen);
+        document.body.style.overflow = this.playlistOpen ? 'hidden' : '';
+
+        // Hide floating chapters FAB when playlist is open, restore on close
+        const floatingPodBtn = document.getElementById('pod-floating-btn');
+        if (floatingPodBtn) {
+            floatingPodBtn.style.display = this.playlistOpen ? 'none' : 'flex';
+        }
+
+        if (this.playlistOpen) {
+            setTimeout(() => {
+                const active = this.playlistCol.querySelector('.pod-playlist-item.active');
+                if (active) active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }, 350);
+        }
+    }
+
+    /* ── Waveform animation ─── */
+    startWaveAnimation() {
+        if (this.waveAnimFrame) return;
+        const tick = () => {
+            if (!this.isPlaying) return;
+            const pct = this.audio?.duration ? this.audio.currentTime / this.audio.duration : 0;
+            this.drawPlayingWaveform(pct);
+            this.waveAnimFrame = requestAnimationFrame(tick);
+        };
+        this.waveAnimFrame = requestAnimationFrame(tick);
+    }
+
+    stopWaveAnimation() {
+        if (this.waveAnimFrame) { cancelAnimationFrame(this.waveAnimFrame); this.waveAnimFrame = null; }
+        this.drawStaticWaveform();
+    }
+
+    drawStaticWaveform() {
+        const pct = this.audio?.duration ? this.audio.currentTime / this.audio.duration : 0;
+        this.drawPlayingWaveform(pct);
+    }
+
+    drawPlayingWaveform(progress) {
+        const canvas = this.waveCanvas;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        const w = canvas.width;
-        const h = canvas.height;
-
+        const w = canvas.width, h = canvas.height;
         ctx.clearRect(0, 0, w, h);
 
-        const ch = this.chapters[this.currentTrack];
-        const progress = this.currentTime / ch.durationSec;
-        const barCount = 80;
-        const barWidth = w / barCount - 1;
-
-        // Seed pseudo-random bars based on chapter number for consistency
-        const seed = ch.num * 17;
+        const seed     = this.chapters[this.currentTrack].num * 23 + 7;
+        const barCount = Math.floor(w / 4);
+        const barW     = 2;
+        const gap      = barCount > 1 ? (w - barCount * barW) / (barCount - 1) : 0;
 
         for (let i = 0; i < barCount; i++) {
-            const pseudo = Math.abs(Math.sin(seed + i * 0.7) * Math.cos(i * 0.3 + seed)) * 0.8 + 0.2;
-            const barH = pseudo * (h - 8);
-            const x = i * (barWidth + 1);
+            const t      = i / barCount;
+            const pseudo = Math.abs(
+                Math.sin(seed + i * 0.55) * 0.45 +
+                Math.cos(i * 0.29 + seed * 0.3) * 0.35 +
+                Math.sin(i * 0.13) * 0.2
+            ) * 0.9 + 0.1;
+
+            let barH = pseudo * (h - 8);
+            if (this.isPlaying && Math.abs(t - progress) < 0.04) {
+                barH *= 1 + 0.35 * Math.sin(Date.now() / 100 + i * 0.8);
+            }
+            barH = Math.min(barH, h - 4);
+
+            const x = i * (barW + gap);
             const y = (h - barH) / 2;
 
-            const isPast = (i / barCount) <= progress;
+            if (t <= progress) {
+                const grad = ctx.createLinearGradient(0, y, 0, y + barH);
+                grad.addColorStop(0, 'rgba(212,175,55,1)');
+                grad.addColorStop(1, 'rgba(212,175,55,0.4)');
+                ctx.fillStyle = grad;
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.09)';
+            }
 
-            ctx.fillStyle = isPast
-                ? 'rgba(212, 175, 55, 0.8)'
-                : 'rgba(255, 255, 255, 0.12)';
-
-            ctx.fillRect(x, y, barWidth, barH);
+            if (ctx.roundRect) {
+                ctx.beginPath(); ctx.roundRect(x, y, barW, barH, 1); ctx.fill();
+            } else {
+                ctx.fillRect(x, y, barW, barH);
+            }
         }
     }
 }

@@ -13,7 +13,7 @@ export const COLLECTIONS = [
         name: 'Aura Collection',
         tagline: 'Metallic Bottle Visual Theater',
         description: 'The Aura Collection embodies radiance and allure with beautifully polished metallic bottles crowned with distinctive sculptural caps. Each fragrance captures elegance in every drop — refined, luminous, and full of character.',
-        image: 'Recommended Products/Aura Gold and Silver.jpeg',
+        image: 'Recommended Products/Aura Gold and Silver.png',
         variants: [
             {
                 name: 'Aura Gold',
@@ -51,7 +51,7 @@ export const COLLECTIONS = [
         name: 'Celestial Collection',
         tagline: 'Complex Green Florals',
         description: 'Embark on a celestial olfactory odyssey with the Aurora Celestial Collection. Each fragrance is a portal to otherworldly realms, where scents evoke the mysteries of the cosmos. These fragrances transcend earthly boundaries.',
-        image: 'Recommended Products/Celestial Garden of Eadens.jpeg',
+        image: 'Recommended Products/Celestial Garden of Eadens.png',
         variants: [
             {
                 name: 'Celestial Garden of Eden',
@@ -78,7 +78,7 @@ export const COLLECTIONS = [
         name: 'Deer Collection',
         tagline: 'Dense, Regal Oud Narratives',
         description: 'Inspired by nature\'s most graceful ingredients, the Deer Collection captures the essence of the forest and the serene beauty found within its depths. Perfect for those who appreciate subtlety, with fragrances that evoke calm, tranquility, and refined elegance.',
-        image: 'Recommended Products/Deer Her majesty.jpeg',
+        image: 'Recommended Products/Deer Her majesty.png',
         variants: [
             {
                 name: 'Deer Her Majesty',
@@ -105,7 +105,7 @@ export const COLLECTIONS = [
         name: 'Elite Collection',
         tagline: 'Crisp Corporate Profiles Optimized for Longevity',
         description: 'Elite and Elite VIP are presented in striking luxury bottles crowned with refined wooden caps and housed in elegant boxes. This collection embodies modern prestige and understated power — a perfect harmony of sophistication, confidence, and timeless allure.',
-        image: 'Recommended Products/Elite and Elite Vip.jpeg',
+        image: 'Recommended Products/Elite and Elite Vip.png',
         variants: [
             {
                 name: 'Elite',
@@ -143,7 +143,7 @@ export const COLLECTIONS = [
         name: 'Galactic Collection',
         tagline: 'Avant-Garde Fruity-Woody Accords',
         description: 'The Aurora Galactic Collection is a futuristic and bold fragrance line designed for those drawn to the mysteries of the universe and the infinite beauty of the cosmos. Galactic fragrances feature unique blends of fresh, metallic, and cosmic-inspired notes, offering an energetic, vibrant scent profile.',
-        image: 'Recommended Products/Galacatic cherry in the woods.jpeg',
+        image: 'Recommended Products/Galacatic cherry in the woods.png',
         variants: [
             {
                 name: 'Galactic Black Obsidian',
@@ -181,7 +181,7 @@ export const COLLECTIONS = [
         name: 'Lorenzo Collection',
         tagline: 'Smoky Ouds & Fresh Marine Notes',
         description: 'Dive into an exquisite array of scents with the Aurora Lorenzo Collection, where each fragrance is a testament to olfactory mastery. From the captivating blend of smoky oud and woody notes to the refreshing burst of citrusy freshness, this collection offers a sensory journey like no other.',
-        image: 'Recommended Products/Lorenzo Burning Oud.jpeg',
+        image: 'Recommended Products/Lorenzo Burning Oud.png',
         variants: [
             {
                 name: 'Lorenzo Burning Oud',
@@ -219,7 +219,7 @@ export const COLLECTIONS = [
         name: 'Odyssey Collection',
         tagline: 'Heavy-Projection Heritage Profiles',
         description: 'The Odyssey Collection is inspired by the rich essence of Arabic aromas and timeless cultural traditions. Each perfume comes in a sleek, elegant bottle, presented in a luxurious Dubai Frame-inspired box that reflects sophistication and heritage.',
-        image: 'Recommended Products/Odyssey.jpeg',
+        image: 'Recommended Products/Odyssey.png',
         variants: [
             {
                 name: 'Odyssey Al Fakher',
@@ -258,7 +258,7 @@ export const MINIATURE_STRATEGY = {
     title: 'The Miniature Strategy',
     subtitle: 'Simultaneous 12-Variant Launch in Portable Travel Formats',
     description: 'All 12 recommended full-size variants must launch simultaneously in portable 10ml and 20ml travel formats to mitigate consumer trial hesitation. This dual-format strategy (100ml full-size + 10ml/20ml miniature) enables low-risk consumer sampling at accessible price points while building brand familiarity before full-size conversion.',
-    image: 'Recommended Products/Miniatures.jpeg',
+    image: 'Recommended Products/Miniatures.png',
     keyPoints: [
         'All 12 variants available in 10ml & 20ml portable formats',
         'Mitigates consumer trial hesitation for premium-priced fragrances',

@@ -10,7 +10,7 @@ Upload your **entire project folder** to Hostinger. The structure should be:
 aurora-tev-portal/
 ├── server.js           ← Express server (entry point)
 ├── package.json        ← Dependencies
-├── .env                ← API key (DO NOT commit to Git)
+├── .env                
 ├── .gitignore
 ├── index.html
 ├── css/
