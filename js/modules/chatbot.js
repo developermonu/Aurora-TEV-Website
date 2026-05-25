@@ -1,4 +1,4 @@
-// Aurora Scents — STATE 7: Claude AI Chatbot — Production Client
+// Aurora Scents — STATE 7: Gemini AI Chatbot — Production Client
 // Communicates with Express proxy at /api/chat. API key + PDF + system prompt all live server-side.
 
 export class ChatBot {
@@ -80,17 +80,8 @@ export class ChatBot {
 
             // Populate selector options if available
             if (selector) {
-                const previousValue = this.selectedModel || selector.value;
                 selector.innerHTML = '';
                 
-                // Add Claude option if active
-                if (data.model && data.model !== 'none') {
-                    const opt = document.createElement('option');
-                    opt.value = data.model;
-                    opt.textContent = this.formatModelName(data.model);
-                    selector.appendChild(opt);
-                }
-
                 // Add Gemini options if available
                 if (data.geminiAvailable && data.geminiModels) {
                     data.geminiModels.forEach(m => {
@@ -99,24 +90,22 @@ export class ChatBot {
                         opt.textContent = m === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' : 'Gemini 2.5 Flash-Lite';
                         selector.appendChild(opt);
                     });
+                } else {
+                    const opt1 = document.createElement('option');
+                    opt1.value = 'gemini-2.5-flash-lite';
+                    opt1.textContent = 'Gemini 2.5 Flash-Lite';
+                    selector.appendChild(opt1);
+                    const opt2 = document.createElement('option');
+                    opt2.value = 'gemini-2.5-flash';
+                    opt2.textContent = 'Gemini 2.5 Flash';
+                    selector.appendChild(opt2);
                 }
 
-                // Restore previous selection if it's still available, otherwise default to Gemini 2.5 Flash-Lite
-                if (previousValue && selector.querySelector(`option[value="${previousValue}"]`)) {
-                    this.selectedModel = previousValue;
-                    selector.value = this.selectedModel;
-                } else if (selector.querySelector('option[value="gemini-2.5-flash-lite"]')) {
-                    this.selectedModel = 'gemini-2.5-flash-lite';
-                    selector.value = this.selectedModel;
-                } else if (selector.options.length > 0) {
-                    this.selectedModel = selector.options[0].value;
-                    selector.value = this.selectedModel;
-                }
+                selector.value = this.selectedModel;
             }
 
-            if (data.status === 'ok' && data.model && data.model !== 'none') {
-                // All good — model discovered, API key works
-                const modelName = this.formatModelName(this.selectedModel || data.model);
+            if (data.status === 'ok') {
+                const modelName = this.formatModelName(this.selectedModel);
                 if (data.pdfLoaded) {
                     badge.textContent = `${modelName} — TEV Report Cached (${(data.wordCount || 0).toLocaleString()} words)`;
                 } else {
@@ -135,28 +124,20 @@ export class ChatBot {
                 dot.style.boxShadow  = '0 0 6px #ef4444';
                 this.addMessage('assistant', `⚠️ **API Key Configuration Issue**
 
-The server could not authenticate with the Anthropic Claude API. This means the API key is either invalid, expired, or the account needs billing setup.
+The server could not authenticate with the Gemini API. This means the API key is either invalid, expired, or the account needs billing setup.
 
 **To fix this:**
-1. Go to **console.anthropic.com** → API Keys
-2. Verify the key is active and has credits
-3. Update the key in Hostinger Environment Variables (or the \`.env\` file)
-4. Restart the server
+1. Go to Google AI Studio or your Gemini Console.
+2. Verify the key is active and has credits.
+3. Update the key \`GEMINI_API_KEY\` in Hostinger Environment Variables (or the \`.env\` file).
+4. Restart the server.
 
 The TEV Report (${(data.wordCount || 0).toLocaleString()} words) is loaded and ready — just the API key needs fixing.`);
-
-            } else if (data.status === 'discovering') {
-                badge.textContent = 'Discovering available models...';
-                dot.style.background = '#f59e0b';
-                dot.style.boxShadow  = '0 0 6px #f59e0b';
-                this.addMessage('assistant', 'The server is discovering available Claude models. Please wait a moment and refresh the page.');
-                // Retry in 5 seconds
-                setTimeout(() => this.checkServerStatus(), 5000);
 
             } else {
                 badge.textContent = 'Server status unknown';
                 if (this.messages.length === 0 && this.messagesContainer.children.length === 0) {
-                    this.addWelcomeMessage('Claude', data.pdfLoaded, data.wordCount);
+                    this.addWelcomeMessage('Gemini', data.pdfLoaded, data.wordCount);
                 }
             }
 
@@ -178,18 +159,10 @@ Then refresh this page.`);
     formatModelName(modelId) {
         if (modelId.includes('gemini-2.5-flash-lite')) return 'Gemini 2.5 Flash-Lite';
         if (modelId.includes('gemini-2.5-flash'))      return 'Gemini 2.5 Flash';
-        if (modelId.includes('opus-4'))      return 'Claude 4 Opus';
-        if (modelId.includes('sonnet-4-5'))  return 'Claude Sonnet 4.5';
-        if (modelId.includes('sonnet-4'))    return 'Claude Sonnet 4';
-        if (modelId.includes('3-5-sonnet'))  return 'Claude 3.5 Sonnet';
-        if (modelId.includes('3-opus'))      return 'Claude 3 Opus';
-        if (modelId.includes('3-sonnet'))    return 'Claude 3 Sonnet';
-        if (modelId.includes('3-haiku'))     return 'Claude 3 Haiku';
-        if (modelId.includes('3-5-haiku'))   return 'Claude 3.5 Haiku';
         return modelId;
     }
 
-    addWelcomeMessage(modelName = 'Claude', pdfLoaded = false, wordCount = 0) {
+    addWelcomeMessage(modelName = 'Gemini', pdfLoaded = false, wordCount = 0) {
         const pdfNote = pdfLoaded
             ? `I have been loaded with the complete **TEV Report** (~${(wordCount || 0).toLocaleString()} words) cached server-side for fast, cost-efficient responses.`
             : `_Note: The TEV Report PDF could not be loaded on the server. Responses will be based on embedded key data points._`;
@@ -308,32 +281,26 @@ Select a pre-built strategy inquiry below, or type your question below.`);
     buildErrorMessage(err) {
         const msg = err.message || String(err);
 
-        if (msg.includes('ANTHROPIC_API_KEY')) {
-            return `⚠️ **Server Configuration Error**\n\nThe API key is not configured on the server. Add \`ANTHROPIC_API_KEY\` to your environment variables and restart the server.`;
+        if (msg.includes('GEMINI_API_KEY')) {
+            return `⚠️ **Server Configuration Error**\n\nThe API key is not configured on the server. Add \`GEMINI_API_KEY\` to your environment variables and restart the server.`;
         }
         if (msg.includes('401') || msg.includes('authentication') || msg.includes('auth')) {
             return `⚠️ **Authentication Error**\n\nThe API key is invalid or expired. Update it in Hostinger Environment Variables or the \`.env\` file and restart the server.`;
-        }
-        if (msg.includes('No working Claude model')) {
-            return `⚠️ **No Working Model Found**\n\nThe API key cannot access any Claude models. Please check:\n• The key is active at **console.anthropic.com**\n• Your account has billing set up and credits available\n• The key has the correct permissions`;
         }
         if (msg.includes('429') || msg.includes('rate') || msg.includes('Too many')) {
             return `⚠️ **Rate Limit Reached**\n\nToo many requests. Please wait 30 seconds and try again.`;
         }
         if (msg.includes('overloaded') || msg.includes('529')) {
-            return `⚠️ **API Overloaded**\n\nClaude is experiencing high demand. Please retry in a few seconds.`;
+            return `⚠️ **API Overloaded**\n\nThe Gemini API is experiencing high demand. Please retry in a few seconds.`;
         }
         if (msg.includes('initialising') || msg.includes('503')) {
             return `⚠️ **Server Starting Up**\n\nThe server is still loading the TEV Report. Please wait a moment and try again.`;
         }
         if (msg.includes('502') || msg.includes('Unable to reach')) {
-            return `⚠️ **Network Error**\n\nThe server cannot reach the Anthropic API. Check the server's internet connection.`;
+            return `⚠️ **Network Error**\n\nThe server cannot reach the Gemini API. Check the server's internet connection.`;
         }
         if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed')) {
             return `⚠️ **Connection Lost**\n\nCannot reach the server. Make sure the Node.js server is running (\`node server.js\`) and refresh the page.`;
-        }
-        if (msg.includes('retry')) {
-            return `⚠️ **Model Switching**\n\nThe server is switching to a different model. Please resend your message.`;
         }
         return `⚠️ **Error**\n\n${msg}\n\nPlease try again or contact your administrator.`;
     }

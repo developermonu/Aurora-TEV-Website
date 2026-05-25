@@ -258,7 +258,7 @@ export const MINIATURE_STRATEGY = {
     title: 'The Miniature Strategy',
     subtitle: 'Simultaneous 12-Variant Launch in Portable Travel Formats',
     description: 'All 12 recommended full-size variants must launch simultaneously in portable 10ml and 20ml travel formats to mitigate consumer trial hesitation. This dual-format strategy (100ml full-size + 10ml/20ml miniature) enables low-risk consumer sampling at accessible price points while building brand familiarity before full-size conversion.',
-    image: 'Recommended Products/Miniatures.png',
+    image: 'Recommended Products/miniatures.png',
     keyPoints: [
         'All 12 variants available in 10ml & 20ml portable formats',
         'Mitigates consumer trial hesitation for premium-priced fragrances',
