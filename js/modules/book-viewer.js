@@ -530,7 +530,7 @@ export class BookViewer {
             maxShadowOpacity:   0.5,
             mobileScrollSupport: false,
             useMouseEvents:     true,
-            swipeDistance:      mobile ? 20 : 30,
+            swipeDistance:      mobile ? 10 : 15,
         });
 
         this.flipBook.loadFromHTML(this.stage.querySelectorAll('.flipbook-page'));
