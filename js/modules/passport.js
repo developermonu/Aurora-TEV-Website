@@ -5,7 +5,7 @@ export class PassportShield {
 
     constructor({ onAuthenticated }) {
         this.onAuthenticated = onAuthenticated;
-        this.TOKEN = 'AURORA_INDIA_2026';
+        this.TOKEN = 'AuroraScents#IndiaPhase2TEV!2026';
         this.attempts = 0;
 
         this.shield = document.getElementById('passport-shield');

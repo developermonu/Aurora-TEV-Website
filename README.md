@@ -78,7 +78,7 @@ Or via hPanel → Node.js → **Restart Application**
 ### Step 6 — Verify it's working
 
 - Open `https://yourdomain.com` — you should see the Passport Shield
-- Enter token `AURORA_INDIA_2026` to authenticate
+- Enter token `AuroraScents#IndiaPhase2TEV!2026` to authenticate
 - Navigate to **AI Strategy Advisor** and ask a question
 - The green dot should show **Claude Sonnet — Live TEV Intelligence**
 
