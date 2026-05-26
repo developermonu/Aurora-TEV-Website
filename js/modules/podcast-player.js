@@ -16,6 +16,7 @@ export class PodcastPlayer {
         this.audio = null;
 
         this.chapters = [
+            { num: 'Overview', title: 'TEV Study Overview Summary',         src: 'Podcasts/Podcast Audio Files/Overview Summary.mp3', cover: 'Podcasts/Cover Images/Overview Summary.png', hasCover: true },
             { num: 1,  title: 'Executive Summary & Strategic Overview',    src: 'Podcasts/Podcast Audio Files/chapter_1.mp3',  cover: 'Podcasts/Cover Images/chapter 1.png', hasCover: true  },
             { num: 2,  title: 'Study Background, Scope & Methodology',      src: 'Podcasts/Podcast Audio Files/Chapter_2.mp3',  cover: 'Podcasts/Cover Images/chapter 2.png', hasCover: true  },
             { num: 3,  title: 'India Fragrance Market Overview',            src: 'Podcasts/Podcast Audio Files/Chapter_3.mp3',  cover: 'Podcasts/Cover Images/chapter 3.png', hasCover: true  },
@@ -61,21 +62,22 @@ export class PodcastPlayer {
             'linear-gradient(135deg,#2d3436 0%,#d4af37 100%)',
             'linear-gradient(135deg,#0a0a0a 0%,#3d2b1f 100%)',
         ];
-        return g[(num - 1) % g.length];
+        const val = typeof num === 'number' ? num : 14;
+        return g[(val - 1) % g.length];
     }
 
     /* ── Build cover HTML ─── */
     buildCoverHtml(ch) {
         return ch.hasCover
-            ? `<img src="${ch.cover}" alt="Chapter ${ch.num} Cover" class="pod-cover-img">`
-            : `<div class="pod-cover-placeholder" style="background:${this.getCoverGradient(ch.num)};"><span class="pod-cover-num">${String(ch.num).padStart(2,'0')}</span></div>`;
+            ? `<img src="${ch.cover}" alt="${typeof ch.num === 'number' ? `Chapter ${ch.num}` : ch.num} Cover" class="pod-cover-img">`
+            : `<div class="pod-cover-placeholder" style="background:${this.getCoverGradient(ch.num)};"><span class="pod-cover-num">${typeof ch.num === 'number' ? String(ch.num).padStart(2,'0') : '00'}</span></div>`;
     }
 
     /* ── Build one playlist item ─── */
     buildPlaylistItem(c, i) {
         const thumb = c.hasCover
-            ? `<img src="${c.cover}" alt="Chapter ${c.num}">`
-            : `<div class="pod-pitem-thumb-gradient" style="background:${this.getCoverGradient(c.num)};"><span>${String(c.num).padStart(2,'0')}</span></div>`;
+            ? `<img src="${c.cover}" alt="${typeof c.num === 'number' ? `Chapter ${c.num}` : c.num}">`
+            : `<div class="pod-pitem-thumb-gradient" style="background:${this.getCoverGradient(c.num)};"><span>${typeof c.num === 'number' ? String(c.num).padStart(2,'0') : '00'}</span></div>`;
         return `
             <div class="pod-playlist-item ${i === this.currentTrack ? 'active' : ''}" data-track="${i}" id="pod-pitem-${i}">
                 <div class="pod-pitem-thumb">
@@ -85,7 +87,7 @@ export class PodcastPlayer {
                     </div>
                 </div>
                 <div class="pod-pitem-info">
-                    <div class="pod-pitem-num">Chapter ${c.num}</div>
+                    <div class="pod-pitem-num">${typeof c.num === 'number' ? `Chapter ${c.num}` : c.num}</div>
                     <div class="pod-pitem-title">${c.title}</div>
                 </div>
             </div>`;
@@ -123,7 +125,7 @@ export class PodcastPlayer {
                         <div class="pod-cover-ring" id="pod-cover-ring"></div>
                     </div>
                     <div class="pod-info-area">
-                        <div class="pod-chapter-badge" id="pod-chapter-badge">CHAPTER ${ch.num} OF ${this.chapters.length}</div>
+                        <div class="pod-chapter-badge" id="pod-chapter-badge">${typeof ch.num === 'number' ? `CHAPTER ${ch.num} OF ${this.chapters.length}` : String(ch.num).toUpperCase()}</div>
                         <div class="pod-track-title" id="pod-track-title">${ch.title}</div>
                         <div class="pod-track-series">Aurora Scents TEV Intelligence Briefing</div>
                     </div>
@@ -243,7 +245,7 @@ export class PodcastPlayer {
 
         // Update text info
         this.trackTitle.textContent   = ch.title;
-        this.chapterBadge.textContent = `CHAPTER ${ch.num} OF ${this.chapters.length}`;
+        this.chapterBadge.textContent = typeof ch.num === 'number' ? `CHAPTER ${ch.num} OF ${this.chapters.length}` : String(ch.num).toUpperCase();
         this.seekEl.value             = 0;
         this.timeCurrent.textContent  = '0:00';
         this.timeTotal.textContent    = '—:——';
@@ -466,7 +468,8 @@ export class PodcastPlayer {
         const w = canvas.width, h = canvas.height;
         ctx.clearRect(0, 0, w, h);
 
-        const seed     = this.chapters[this.currentTrack].num * 23 + 7;
+        const numVal   = typeof this.chapters[this.currentTrack].num === 'number' ? this.chapters[this.currentTrack].num : 0;
+        const seed     = numVal * 23 + 7;
         const barCount = Math.floor(w / 4);
         const barW     = 2;
         const gap      = barCount > 1 ? (w - barCount * barW) / (barCount - 1) : 0;
