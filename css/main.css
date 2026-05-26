@@ -500,6 +500,24 @@ img { max-width: 100%; height: auto; display: block; }
         min-height: 0 !important;
         overflow: hidden !important;
     }
+
+    #section-mindmap.active {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        padding: var(--space-lg) var(--space-2xl) !important;
+        padding-bottom: var(--space-lg) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    #mindmap-mount {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
 }
 
 /* Mobile Viewport: allow scrolling within active sections */
@@ -574,6 +592,23 @@ img { max-width: 100%; height: auto; display: block; }
         flex: 1 !important;
         min-height: 0 !important;
         overflow: hidden !important;
+    }
+
+    #section-mindmap.active {
+        height: calc(100vh - var(--mobile-header-height)) !important;
+        max-height: calc(100vh - var(--mobile-header-height)) !important;
+        padding: var(--space-sm) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    #mindmap-mount {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 }
 
@@ -3403,8 +3438,9 @@ img { max-width: 100%; height: auto; display: block; }
 .mm2-shell {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 200px);
-    min-height: 500px;
+    flex: 1;
+    height: calc(100vh - 120px);
+    min-height: 520px;
     background: #06060a;
     border: 1px solid var(--border-subtle);
     border-radius: var(--border-radius-lg);

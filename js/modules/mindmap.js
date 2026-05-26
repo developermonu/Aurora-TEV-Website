@@ -111,20 +111,21 @@ export class MindMap {
         };
 
         // ── State ─────────────────────────────────────────────────────────
-        this.expandedNodes = new Set(['root']); // root always expanded
+        this.expandedNodes = new Set(); // will expand all on init
         this.isFullscreen = false;
 
         // ── Layout constants ──────────────────────────────────────────────
         // Node dimensions
-        this.ROOT_W = 140; this.ROOT_H = 64;
-        this.L1_W = 170; this.L1_H = 56;
-        this.L2_W = 160; this.L2_H = 52;
-        this.L3_W = 150; this.L3_H = 48;
+        this.ROOT_W = 148; this.ROOT_H = 68;
+        this.L1_W = 178; this.L1_H = 58;
+        this.L2_W = 168; this.L2_H = 54;
+        this.L3_W = 158; this.L3_H = 50;
 
         // Gaps
-        this.COL_GAP = 80;      // horizontal gap between levels
-        this.ROW_GAP = 18;      // vertical gap between siblings
+        this.COL_GAP = 72;      // horizontal gap between levels
+        this.ROW_GAP = 16;      // vertical gap between siblings
 
+        this._expandAll(); // Start fully expanded
         this.render();
     }
 
@@ -169,6 +170,10 @@ export class MindMap {
                         <button class="mm2-btn" id="mm2-zoom-reset" title="Reset Zoom">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
                         </button>
+                        <button class="mm2-btn" id="mm2-fit" title="Fit to Screen">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" stroke-width="1.2"/></svg>
+                            Fit
+                        </button>
                         <div class="mm2-divider"></div>
                         <button class="mm2-btn" id="mm2-fullscreen" title="Toggle Fullscreen">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="mm2-fs-icon"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
@@ -205,12 +210,20 @@ export class MindMap {
         this.bindToolbar();
         this.bindPan();
         this.drawMap();
-        this.centerMap();
 
-        // Hide hint after 5s
+        // Auto-enter fullscreen on first load for immersive view
+        requestAnimationFrame(() => {
+            this.toggleFullscreen();
+            // After DOM settles, fit the map to fill screen
+            requestAnimationFrame(() => {
+                this.fitToScreen();
+            });
+        });
+
+        // Hide hint after 6s
         setTimeout(() => {
             if (this.hint) this.hint.classList.add('mm2-hint-hidden');
-        }, 5000);
+        }, 6000);
     }
 
     // ── Layout Engine ─────────────────────────────────────────────────────
@@ -389,19 +402,33 @@ export class MindMap {
     }
 
     centerMap() {
-        // Position canvas so map is nicely centered/visible on load
+        // Vertically center the map in the viewport
+        const ch = parseFloat(this.canvas.style.height) || 600;
+        const vh = this.viewport.clientHeight;
+        this.viewport.scrollLeft = 0;
+        this.viewport.scrollTop = Math.max(0, (ch * this.scale - vh) / 2);
+    }
+
+    fitToScreen() {
+        // Scale the map so its full width fills the viewport, then center vertically
         const vw = this.viewport.clientWidth;
         const vh = this.viewport.clientHeight;
         const cw = parseFloat(this.canvas.style.width) || 800;
         const ch = parseFloat(this.canvas.style.height) || 600;
 
-        if (cw < vw) {
+        const PADDING = 32; // px padding on each side
+        const scaleW = (vw - PADDING * 2) / cw;
+        const scaleH = (vh - PADDING * 2) / ch;
+        // Use the smaller of the two so everything is visible
+        const newScale = Math.min(scaleW, scaleH, 1); // never upscale beyond 1
+        this.setZoom(Math.max(0.2, parseFloat(newScale.toFixed(2))));
+
+        // After scaling, center
+        requestAnimationFrame(() => {
+            const scaledH = ch * this.scale;
             this.viewport.scrollLeft = 0;
-        } else {
-            this.viewport.scrollLeft = 0; // Start at left (root is on left)
-        }
-        // Vertically center
-        this.viewport.scrollTop = Math.max(0, (ch - vh) / 2);
+            this.viewport.scrollTop = Math.max(0, (scaledH - vh) / 2);
+        });
     }
 
     // ── Toolbar ───────────────────────────────────────────────────────────
@@ -410,8 +437,9 @@ export class MindMap {
         document.getElementById('mm2-zoom-in').addEventListener('click', () => this.zoom(0.15));
         document.getElementById('mm2-zoom-out').addEventListener('click', () => this.zoom(-0.15));
         document.getElementById('mm2-zoom-reset').addEventListener('click', () => this.setZoom(1));
+        document.getElementById('mm2-fit').addEventListener('click', () => this.fitToScreen());
         document.getElementById('mm2-fullscreen').addEventListener('click', () => this.toggleFullscreen());
-        document.getElementById('mm2-expand-all').addEventListener('click', () => this.expandAll());
+        document.getElementById('mm2-expand-all').addEventListener('click', () => { this.expandAll(); this.fitToScreen(); });
         document.getElementById('mm2-collapse-all').addEventListener('click', () => this.collapseAll());
 
         document.addEventListener('keydown', (e) => {
@@ -438,7 +466,8 @@ export class MindMap {
         this.zoomVal.textContent = Math.round(this.scale * 100) + '%';
     }
 
-    expandAll() {
+    _expandAll() {
+        // Internal: expand without redraw (used in constructor)
         const walk = (node) => {
             if (node.children && node.children.length) {
                 this.expandedNodes.add(node.id);
@@ -446,6 +475,10 @@ export class MindMap {
             }
         };
         walk(this.data);
+    }
+
+    expandAll() {
+        this._expandAll();
         this.drawMap();
     }
 
@@ -507,6 +540,9 @@ export class MindMap {
     toggleFullscreen() {
         this.isFullscreen = !this.isFullscreen;
         this.shell.classList.toggle('mm2-fullscreen', this.isFullscreen);
+        // Also hide the main app shell elements so mind map sits over everything
+        const appShell = document.getElementById('app-shell');
+        if (appShell) appShell.style.overflow = this.isFullscreen ? 'hidden' : '';
         document.body.style.overflow = this.isFullscreen ? 'hidden' : '';
 
         const icon = document.getElementById('mm2-fs-icon');
@@ -514,6 +550,11 @@ export class MindMap {
             icon.innerHTML = '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="21" y2="3"/><line x1="3" y1="21" x2="14" y2="10"/>';
         } else {
             icon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
+        }
+
+        // Re-fit after fullscreen toggle so map fills the new viewport dimensions
+        if (this.isFullscreen) {
+            requestAnimationFrame(() => this.fitToScreen());
         }
     }
 }
