@@ -6,6 +6,7 @@ import { BookViewer } from './modules/book-viewer.js';
 import { PodcastPlayer } from './modules/podcast-player.js';
 import { PortfolioGrid } from './modules/portfolio.js';
 import { ChatBot } from './modules/chatbot.js';
+import { MindMap } from './modules/mindmap.js';
 
 class AuroraPortalApp {
 
@@ -152,6 +153,13 @@ class AuroraPortalApp {
                 this.modules.chatbot = new ChatBot('chatbot-mount');
             } catch (e) {
                 console.error("Failed to initialize ChatBot module:", e);
+            }
+        }
+        if (!this.modules.mindmap) {
+            try {
+                this.modules.mindmap = new MindMap('mindmap-mount');
+            } catch (e) {
+                console.error("Failed to initialize MindMap module:", e);
             }
         }
     }
