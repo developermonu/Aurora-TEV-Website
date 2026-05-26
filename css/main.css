@@ -3602,7 +3602,7 @@ img { max-width: 100%; height: auto; display: block; }
     position: relative;
     display: inline-block;
     min-width: 100%;
-    min-height: 100%;
+    /* NO min-height: 100% — let the canvas be exactly as tall as the content */
     transform-origin: top left;
     transition: transform 200ms ease;
 }
@@ -3638,7 +3638,7 @@ img { max-width: 100%; height: auto; display: block; }
     gap: 6px;
     border-radius: 8px;
     box-sizing: border-box;
-    padding: 0 12px;
+    padding: 4px 14px;
     cursor: default;
     transition: box-shadow 200ms ease, border-color 200ms ease, transform 150ms ease, background 200ms ease;
 }
@@ -3674,7 +3674,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mm2-d0 .mm2-node-inner span {
     color: var(--accent-gold);
-    font-size: 0.78rem;
+    font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-align: center;
@@ -3690,7 +3690,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mm2-d1 .mm2-node-inner span {
     color: var(--text-primary);
-    font-size: 0.71rem;
+    font-size: 0.92rem;
     font-weight: 600;
     letter-spacing: 0.02em;
     line-height: 1.35;
@@ -3718,7 +3718,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mm2-d2 .mm2-node-inner span {
     color: var(--text-secondary);
-    font-size: 0.67rem;
+    font-size: 0.84rem;
     font-weight: 500;
     letter-spacing: 0.01em;
     line-height: 1.35;
@@ -3746,7 +3746,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 .mm2-d3 .mm2-node-inner span {
     color: var(--text-tertiary);
-    font-size: 0.64rem;
+    font-size: 0.78rem;
     font-weight: 400;
     line-height: 1.35;
 }

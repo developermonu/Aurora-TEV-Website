@@ -115,15 +115,15 @@ export class MindMap {
         this.isFullscreen = false;
 
         // ── Layout constants ──────────────────────────────────────────────
-        // Node dimensions
-        this.ROOT_W = 148; this.ROOT_H = 68;
-        this.L1_W = 178; this.L1_H = 58;
-        this.L2_W = 168; this.L2_H = 54;
-        this.L3_W = 158; this.L3_H = 50;
+        // Node dimensions — sized for comfortable readability at ~100% zoom
+        this.ROOT_W = 200; this.ROOT_H = 80;
+        this.L1_W = 230; this.L1_H = 72;
+        this.L2_W = 210; this.L2_H = 64;
+        this.L3_W = 195; this.L3_H = 56;
 
         // Gaps
-        this.COL_GAP = 72;      // horizontal gap between levels
-        this.ROW_GAP = 16;      // vertical gap between siblings
+        this.COL_GAP = 60;      // horizontal gap between levels
+        this.ROW_GAP = 14;      // vertical gap between siblings
 
         this._expandAll(); // Start fully expanded
         this.render();
@@ -211,14 +211,10 @@ export class MindMap {
         this.bindPan();
         this.drawMap();
 
-        // Auto-enter fullscreen on first load for immersive view
-        requestAnimationFrame(() => {
-            this.toggleFullscreen();
-            // After DOM settles, fit the map to fill screen
-            requestAnimationFrame(() => {
-                this.fitToScreen();
-            });
-        });
+        // Enter fullscreen then fit width — use a small delay to let
+        // the fullscreen layout settle before measuring viewport dimensions
+        this.toggleFullscreen();
+        setTimeout(() => this.fitToScreen(), 120);
 
         // Hide hint after 6s
         setTimeout(() => {
@@ -410,24 +406,22 @@ export class MindMap {
     }
 
     fitToScreen() {
-        // Scale the map so its full width fills the viewport, then center vertically
+        // Scale so the full WIDTH of the tree fills the viewport.
+        // The map is taller than it is wide, so we NEVER constrain by height —
+        // instead let the user scroll vertically to explore all branches.
         const vw = this.viewport.clientWidth;
-        const vh = this.viewport.clientHeight;
         const cw = parseFloat(this.canvas.style.width) || 800;
-        const ch = parseFloat(this.canvas.style.height) || 600;
 
-        const PADDING = 32; // px padding on each side
-        const scaleW = (vw - PADDING * 2) / cw;
-        const scaleH = (vh - PADDING * 2) / ch;
-        // Use the smaller of the two so everything is visible
-        const newScale = Math.min(scaleW, scaleH, 1); // never upscale beyond 1
-        this.setZoom(Math.max(0.2, parseFloat(newScale.toFixed(2))));
+        const PADDING = 24; // px breathing room on left/right
+        const rawScale = (vw - PADDING * 2) / cw;
+        // Allow up to 1.5× upscale so small collapsed trees aren't tiny
+        const newScale = Math.max(0.4, Math.min(1.5, rawScale));
+        this.setZoom(parseFloat(newScale.toFixed(3)));
 
-        // After scaling, center
+        // Scroll to top-left so root is immediately visible
         requestAnimationFrame(() => {
-            const scaledH = ch * this.scale;
             this.viewport.scrollLeft = 0;
-            this.viewport.scrollTop = Math.max(0, (scaledH - vh) / 2);
+            this.viewport.scrollTop = 0;
         });
     }
 
