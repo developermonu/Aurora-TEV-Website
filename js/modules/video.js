@@ -11,6 +11,7 @@ export class VideoBlueprint {
         this.isFullscreen = false;
         this.playbackRate = 1.0;
         this.isMuted = false;
+        this.wasMobileLandscapeActive = false;
 
         this.render();
         this.initVideo();
@@ -132,10 +133,19 @@ export class VideoBlueprint {
         // Video state event listeners
         this.video.addEventListener('play', () => this.onPlay());
         this.video.addEventListener('pause', () => this.onPause());
+        this.video.addEventListener('ended', () => {
+            if (window.innerWidth <= 768) {
+                this.unlockPortrait();
+            }
+        });
         this.video.addEventListener('timeupdate', () => this.onTimeUpdate());
         this.video.addEventListener('loadedmetadata', () => {
             this.timeTotal.textContent = this.formatTime(this.video.duration);
         });
+
+        // Listen to native fullscreen changes (e.g. user pressing Escape or native swipe exit)
+        document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
+        document.addEventListener('webkitfullscreenchange', () => this.handleFullscreenChange());
 
         // Seek input handler
         this.seekEl.addEventListener('input', () => {
@@ -222,6 +232,11 @@ export class VideoBlueprint {
         this.playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
         this.playBtn.title = "Pause (Space)";
         this.overlayPlay.classList.add('hidden');
+
+        // Automatically switch to landscape on phones
+        if (window.innerWidth <= 768) {
+            this.lockLandscape();
+        }
     }
 
     onPause() {
@@ -229,6 +244,11 @@ export class VideoBlueprint {
         this.playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
         this.playBtn.title = "Play (Space)";
         this.overlayPlay.classList.remove('hidden');
+
+        // Automatically return to portrait on phones
+        if (window.innerWidth <= 768) {
+            this.unlockPortrait();
+        }
     }
 
     onTimeUpdate() {
@@ -274,6 +294,83 @@ export class VideoBlueprint {
         } else {
             this.fullscreenIcon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
             document.body.style.overflow = '';
+        }
+    }
+
+    async lockLandscape() {
+        if (this.wasMobileLandscapeActive) return;
+        this.wasMobileLandscapeActive = true;
+
+        try {
+            // First ensure we are in fullscreen (orientation lock requires fullscreen in many mobile browsers)
+            if (this.wrapper.requestFullscreen) {
+                await this.wrapper.requestFullscreen().catch(() => {});
+            } else if (this.wrapper.webkitRequestFullscreen) {
+                await this.wrapper.webkitRequestFullscreen().catch(() => {});
+            }
+            
+            // Lock to landscape
+            if (screen.orientation && typeof screen.orientation.lock === 'function') {
+                await screen.orientation.lock('landscape').catch(err => {
+                    console.warn("Screen orientation lock failed:", err);
+                });
+            }
+        } catch (e) {
+            console.warn("Fullscreen / landscape lock failed:", e);
+        }
+        
+        // Also ensure our custom CSS fullscreen is active to style the layout
+        if (!this.isFullscreen) {
+            this.toggleFullscreen();
+        }
+    }
+
+    async unlockPortrait() {
+        if (!this.wasMobileLandscapeActive) return;
+        this.wasMobileLandscapeActive = false;
+
+        try {
+            // Unlock orientation or lock to portrait
+            if (screen.orientation && typeof screen.orientation.lock === 'function') {
+                await screen.orientation.lock('portrait').catch(() => {
+                    if (screen.orientation.unlock) screen.orientation.unlock();
+                });
+            } else if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        } catch (e) {
+            console.warn("Portrait unlock failed:", e);
+        }
+
+        // Exit native fullscreen if active
+        try {
+            if (document.exitFullscreen) {
+                await document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                await document.webkitExitFullscreen().catch(() => {});
+            }
+        } catch (e) {}
+
+        // Also deactivate custom CSS fullscreen if active
+        if (this.isFullscreen) {
+            this.toggleFullscreen();
+        }
+    }
+
+    handleFullscreenChange() {
+        const isNativeFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        
+        // If native fullscreen was exited, make sure we sync our states
+        if (!isNativeFullscreen) {
+            if (this.isFullscreen) {
+                this.isFullscreen = false;
+                this.wrapper.classList.remove('fullscreen');
+                this.fullscreenIcon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
+                document.body.style.overflow = '';
+            }
+            if (this.wasMobileLandscapeActive) {
+                this.unlockPortrait();
+            }
         }
     }
 
