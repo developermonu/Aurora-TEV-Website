@@ -7,6 +7,7 @@ import { PodcastPlayer } from './modules/podcast-player.js';
 import { PortfolioGrid } from './modules/portfolio.js';
 import { ChatBot } from './modules/chatbot.js';
 import { MindMap } from './modules/mindmap.js';
+import { VideoBlueprint } from './modules/video.js';
 
 class AuroraPortalApp {
 
@@ -162,6 +163,13 @@ class AuroraPortalApp {
                 console.error("Failed to initialize MindMap module:", e);
             }
         }
+        if (!this.modules.video) {
+            try {
+                this.modules.video = new VideoBlueprint('video-mount');
+            } catch (e) {
+                console.error("Failed to initialize VideoBlueprint module:", e);
+            }
+        }
     }
 
     navigateTo(sectionId) {
@@ -201,6 +209,13 @@ class AuroraPortalApp {
 
             // Scroll viewport to top
             this.viewport.scrollTop = 0;
+        }
+
+        // Auto-pause video when navigating away
+        if (sectionId !== 'blueprint-video' && this.modules.video?.video) {
+            try {
+                this.modules.video.video.pause();
+            } catch (e) {}
         }
 
 
