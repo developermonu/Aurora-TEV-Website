@@ -12,6 +12,8 @@ export class VideoBlueprint {
         this.playbackRate = 1.0;
         this.isMuted = false;
         this.wasMobileLandscapeActive = false;
+        this.controlsTimeout = null;
+        this.isControlsHovered = false;
 
         this.render();
         this.initVideo();
@@ -137,6 +139,7 @@ export class VideoBlueprint {
             if (window.innerWidth <= 768) {
                 this.unlockPortrait();
             }
+            this.showControls();
         });
         this.video.addEventListener('timeupdate', () => this.onTimeUpdate());
         this.video.addEventListener('loadedmetadata', () => {
@@ -217,6 +220,26 @@ export class VideoBlueprint {
                 this.video.currentTime = Math.max(0, this.video.currentTime - 5);
             }
         });
+
+        // Auto-hiding control bar triggers
+        const triggerActivity = () => this.showControlsWithAutoTimeout();
+        this.wrapper.addEventListener('mousemove', triggerActivity);
+        this.wrapper.addEventListener('touchstart', triggerActivity);
+        this.wrapper.addEventListener('touchmove', triggerActivity);
+        this.wrapper.addEventListener('click', triggerActivity);
+
+        // Control bar hover overrides
+        const controlBar = this.wrapper.querySelector('.video-control-bar');
+        if (controlBar) {
+            controlBar.addEventListener('mouseenter', () => {
+                this.isControlsHovered = true;
+                this.showControls();
+            });
+            controlBar.addEventListener('mouseleave', () => {
+                this.isControlsHovered = false;
+                this.showControlsWithAutoTimeout();
+            });
+        }
     }
 
     togglePlay() {
@@ -237,6 +260,9 @@ export class VideoBlueprint {
         if (window.innerWidth <= 768) {
             this.lockLandscape();
         }
+
+        // Start controls auto-hide timer
+        this.showControlsWithAutoTimeout();
     }
 
     onPause() {
@@ -249,6 +275,9 @@ export class VideoBlueprint {
         if (window.innerWidth <= 768) {
             this.unlockPortrait();
         }
+
+        // Keep controls permanently visible on pause
+        this.showControls();
     }
 
     onTimeUpdate() {
@@ -379,5 +408,29 @@ export class VideoBlueprint {
         const m = Math.floor(secs / 60);
         const s = Math.floor(secs % 60);
         return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    showControls() {
+        // Clear any existing timeout
+        if (this.controlsTimeout) {
+            clearTimeout(this.controlsTimeout);
+            this.controlsTimeout = null;
+        }
+        // Remove hide-controls class
+        this.wrapper.classList.remove('hide-controls');
+    }
+
+    showControlsWithAutoTimeout() {
+        this.showControls();
+
+        // Only start timeout if video is actually playing and we aren't hovering over controls
+        if (this.isPlaying && !this.isControlsHovered) {
+            this.controlsTimeout = setTimeout(() => {
+                // Double check we are still playing and not hovering controls before hiding
+                if (this.isPlaying && !this.isControlsHovered) {
+                    this.wrapper.classList.add('hide-controls');
+                }
+            }, 3000); // Hide after 3 seconds of inactivity
+        }
     }
 }
