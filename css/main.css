@@ -3527,17 +3527,17 @@ img { max-width: 100%; height: auto; display: block; }
 /* Scrollable container */
 .mindmap-canvas {
     display: block;
-    width: 100%;
+    width: max-content;
     min-width: 100%;
     padding: 32px;
     box-sizing: border-box;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    text-align: center;
 }
 
 /* Detailed Mindmap Image */
 .mindmap-img {
+    display: inline-block;
+    vertical-align: top;
     max-width: 100%;
     height: auto;
     border-radius: var(--border-radius-md);
@@ -3578,6 +3578,46 @@ img { max-width: 100%; height: auto; display: block; }
     50% { transform: translate(-50%, -6px); }
 }
 
+/* Force mindmap section to use fullwidth and fullheight on desktop/mobile */
+#section-mindmap.active {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#section-mindmap.active .section-header {
+    display: none !important; /* Hide header for clean full-screen look */
+}
+
+/* Desktop Webapp viewports overrides */
+@media (min-width: 769px) {
+    #section-mindmap.active {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+    
+    #mindmap-mount {
+        flex: 1 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
+
+    #app-viewport:has(#section-mindmap.active) {
+        overflow: hidden !important;
+    }
+    
+    .mindmap-wrapper {
+        height: 100% !important;
+        min-height: unset !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
+}
+
 /* Responsive Overrides */
 @media (max-width: 768px) {
     .mindmap-wrapper {
@@ -3609,6 +3649,7 @@ img { max-width: 100%; height: auto; display: block; }
         font-size: 0.65rem;
     }
 }
+
 
 
 
